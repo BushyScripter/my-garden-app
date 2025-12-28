@@ -33,11 +33,15 @@ function initAuth() {
 
 // 2. Gatekeeper function: Returns true if logged in, else opens dialog
 function checkAuth() {
-    if (!token) {
-        document.getElementById('auth-dialog').showModal();
-        return false;
-    }
-    return true;
+    // 1. If they are logged in, let them pass
+    if (token) return true;
+
+    // 2. If they are a Guest, let them pass
+    if (localStorage.getItem('isGuest') === 'true') return true;
+
+    // 3. If neither, Block them and show Login
+    document.getElementById('auth-dialog').showModal();
+    return false;
 }
 
 // 3. Safe Navigation Wrapper (Use this for Nav buttons)
@@ -108,12 +112,18 @@ function handleAccountClick() {
 }
 
 function handlePremiumClick() {
-    if(checkAuth()) {
-        if(isPremiumUser) {
-            openCustomerPortal();
-        } else {
-            startCheckout();
-        }
+    // Guests cannot go premium without an account
+    if (!token) {
+        alert("Please create an account to subscribe to Premium!");
+        document.getElementById('auth-dialog').showModal();
+        return;
+    }
+
+    // Real users proceed as normal
+    if(isPremiumUser) {
+        openCustomerPortal();
+    } else {
+        startCheckout();
     }
 }
 
@@ -162,6 +172,8 @@ document.getElementById('auth-form').addEventListener('submit', async (e) => {
 
 function logout() { 
     localStorage.removeItem('garden_token'); 
+    localStorage.removeItem('isGuest'); // Stop being a guest
+    // Optional: localStorage.removeItem('guestData'); // Uncomment if you want to wipe guest data on logout
     location.reload(); 
 }
 
