@@ -511,47 +511,66 @@ dialog::backdrop { background: rgba(0,0,0,0.9); backdrop-filter: blur(8px); }
 .premium-upgrade-btn:hover { transform: scale(1.02); }
 /* --- Mobile Adjustments --- */
 /* --- Force "Fit to Frame" on Mobile --- */
+/* --- Mobile Fixes (All Pages) --- */
+/* --- Mobile Fixes (Sticky Header + Horizontal Scroll) --- */
 @media (max-width: 768px) {
 
-    /* 1. Lock the body to the screen height (No scrolling) */
-    html, body {
-        height: 100%;
-        overflow: hidden; /* Disables scrolling completely */
-        position: fixed; /* Locks the page in place */
+    /* 1. STICKY HEADER WITH HORIZONTAL SCROLL */
+    header {
+        position: fixed; /* Pins it to the glass */
+        top: 0;
+        left: 0;
         width: 100%;
+        z-index: 1000; /* Ensures it sits on top of everything */
+        background-color: #111a11; /* Must match your background so content doesn't show through */
+        
+        /* Horizontal Scroll Magic */
+        display: flex;
+        align-items: center;
+        justify-content: flex-start; /* Aligns items to the left */
+        overflow-x: auto; /* Allows swiping left/right */
+        white-space: nowrap; /* FORCES buttons to stay on one line */
+        flex-wrap: nowrap !important; /* 禁止 wrapping */
+        padding: 15px 20px;
+        gap: 20px;
+        
+        /* Smooth scrolling for iOS */
+        -webkit-overflow-scrolling: touch;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05); /* Optional: subtle border */
     }
 
-    /* 2. Make the Home Section fill exactly 100% of the visible screen */
-    #home {
-        height: 100dvh; /* "dvh" accounts for the mobile address bar automatically */
+    /* Hide the scrollbar on the header (Cleaner look) */
+    header::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* 2. BODY ADJUSTMENTS */
+    /* We add padding to the top so the first line of text isn't hidden behind the header */
+    body {
+        padding-top: 80px !important; 
+        overflow-y: auto; /* Normal vertical scrolling for the page */
+    }
+
+    /* 3. ENSURE NAV LINKS STAY IN A ROW */
+    header nav {
+        display: flex;
+        gap: 15px;
+        flex-shrink: 0; /* Prevents links from getting squashed */
+    }
+
+    /* 4. TEXT SCALING FOR PAGE CONTENT */
+    /* This ensures your Home/Habits/Projects content fits comfortably below */
+    .page-section {
+        min-height: calc(100vh - 80px); /* Full height minus header */
+        padding: 20px;
         display: flex;
         flex-direction: column;
-        justify-content: center; /* Packs everything in the middle */
         align-items: center;
-        padding: 0 20px; /* Adds safety margins on the sides */
     }
 
-    /* 3. Scale text dynamically so it never overflows */
-    #home h1 {
-        font-size: clamp(2rem, 8vw, 3.5rem) !important; /* Shrinks if screen is narrow */
-        margin-bottom: 15px;
-        line-height: 1.1;
-    }
-
-    #home p {
-        font-size: 0.9rem !important;
-        max-width: 90%;
-        margin-bottom: 25px;
-    }
-
-    /* 4. Position the Footer at the absolute bottom of the frame */
-    footer {
-        position: absolute;
-        bottom: 20px; /* Sits 20px up from the bottom edge */
-        margin-top: 0 !important;
-        width: 100%;
-        pointer-events: auto; /* Ensures links are clickable */
-    }
+    /* Keep text readable */
+    h1 { font-size: 2.5rem !important; text-align: center; }
+    p { text-align: center; }
 }
 /* Animations */
 @keyframes pulseRed { 0% { text-shadow: 0 0 5px var(--fire); transform: scale(1); } 50% { text-shadow: 0 0 15px var(--fire); transform: scale(1.2); } 100% { text-shadow: 0 0 5px var(--fire); transform: scale(1); } }
