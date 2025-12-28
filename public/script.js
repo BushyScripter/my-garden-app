@@ -1,6 +1,6 @@
 /* CONFIGURATION */
 const CONFIG = {
-    ADSENSE_CLIENT_ID: "ca-pub-YOUR_ID_HERE"
+    ADSENSE_CLIENT_ID: "ca-pub-3438241188942945"
 };
 
 const MAX_FREE_ITEMS = 3;
@@ -16,11 +16,16 @@ const plantTypes = { "basic": { name: "Basic Leaf", price: 0, color: "var(--p-le
 // 1. Initialize without forcing login
 function initAuth() {
     const storedToken = localStorage.getItem('garden_token');
-    if(storedToken) {
+    const isGuest = localStorage.getItem('isGuest') === 'true';
+
+    if (storedToken) {
         token = storedToken;
-        // FIX: Update the UI immediately so it says "Account" instantly
         updateAccountUI(); 
         loadData(); 
+    } else if (isGuest) {
+        // If they are a guest, load their local data immediately
+        loadData();
+        updateAccountUI();
     } else {
         updateAccountUI();
     }
@@ -162,15 +167,45 @@ function logout() {
 
 async function saveData() {
     updateCoinDisplay();
+
+    // --- GUEST SAVE ---
+    if (localStorage.getItem('isGuest') === 'true') {
+        localStorage.setItem('guestData', JSON.stringify(gardenData));
+        console.log("Saved to Local Storage (Guest)");
+        return;
+    }
+
+    // --- REAL USER SAVE ---
     await apiCall('sync', 'POST', gardenData);
 }
-
 async function loadData() {
+    // --- GUEST LOAD ---
+    if (localStorage.getItem('isGuest') === 'true') {
+        console.log("Loading Guest Data...");
+        const local = localStorage.getItem('guestData');
+        if (local) {
+            gardenData = JSON.parse(local);
+            // Safety checks to ensure arrays exist
+            if (!gardenData.plants) gardenData.plants = [];
+            if (!gardenData.habits) gardenData.habits = [];
+            if (!gardenData.unlockedPlants) gardenData.unlockedPlants = ["basic"];
+        }
+        
+        updateAccountUI(); 
+        renderAll(); 
+        updateCoinDisplay();
+        
+        // Visual indicator that they are a guest
+        const accBtn = document.getElementById('account-btn');
+        if(accBtn) accBtn.innerHTML = "👤 Guest Mode";
+        return;
+    }
+
+    // --- REAL USER LOAD ---
     const res = await apiCall('sync', 'GET');
     
-    // If the server explicitly says "Unauthorized" or "Token invalid"
     if (res && res.error) {
-        logout(); // Force logout so they don't get stuck
+        logout(); 
         return;
     }
 
@@ -294,4 +329,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     initAuth(); initAdSense();
     const c=document.getElementById('bg-particles-container'); for(let i=0;i<15;i++){ const e=document.createElement('div'); e.innerHTML=`<svg class="leaf-particle" viewBox="0 0 24 24"><path d="M17,8C8,10 5.9,16.17 3.82,21.34L5.71,22L6.66,19.7C8.5,15 13,12 19,10H17V8H17M21.9,9C17,7 15,3 13,3H11V5H13C15,5 17,7 17.76,8.3C14,7 11,4 9,2H7V4H9C11,4 13,6 13.4,7.7C11.5,6 9.5,5 7.5,5C5.5,5 3.5,6 1.5,8V10C3.5,8 5.5,7 7.5,7C9.5,7 11.5,8 13.1,9.3C11.5,10.3 9.8,11.5 8,13C4.5,15.7 1.8,19.4 2,22H4C3.8,19.6 6.4,16 9.6,13.5C11,12.3 12.5,11.3 14,10.6C14.8,12 15.5,13.5 16,15H18C17.5,13.3 16.7,11.6 15.7,10C20,11 22,14 22,14V12C22,12 20,10 21.9,9Z"/></svg>`; const s=e.firstChild; s.style.width=s.style.height=`${Math.random()*40+20}px`; s.style.left=`${Math.random()*100}%`; s.style.top=`${Math.random()*100}%`; c.appendChild(s); }
+    // --- GUEST MODE SETUP ---
+    const guestBtn = document.getElementById('guest-btn');
+
+    if (guestBtn) {
+        guestBtn.addEventListener('click', () => {
+            // 1. Close the dialog
+            document.getElementById('auth-dialog').close();
+
+            // 2. Set the "Guest Flag"
+            localStorage.setItem('isGuest', 'true');
+            localStorage.removeItem('token'); // Clear any old login
+
+            // 3. Create empty guest data if it doesn't exist yet
+            if (!localStorage.getItem('guestData')) {
+                const starterData = { 
+                    coins: 0, 
+                    unlockedPlants: ["basic"], 
+                    plants: [], 
+                    habits: [] 
+                };
+                localStorage.setItem('guestData', JSON.stringify(starterData));
+            }
+
+            // 4. Load the Garden
+            loadData();
+            showPage('home');
+            
+            // Optional: Update UI to show they are a guest
+            document.getElementById('coin-count').innerText = "0 (Guest)";
+        });
+    }
 });
