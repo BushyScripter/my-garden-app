@@ -13,14 +13,17 @@
     <header>
         <div class="logo" onclick="showPage('home')">🌿 Digital Garden</div>
         <div class="header-controls">
-            <button class="premium-btn-header" onclick="startCheckout()">👑 Premium</button>
+            <button id="premium-btn" class="premium-btn-header" onclick="handlePremiumClick()">👑 Go Premium</button>
+            
             <div class="coin-display" id="coin-display">🪙 <span id="coin-count">0</span></div>
+            
             <nav class="nav-group">
                 <button class="nav-btn active" onclick="showPage('home')">Home</button>
-                <button class="nav-btn" onclick="showPage('garden')">Projects</button>
-                <button class="nav-btn" onclick="showPage('habits')">Habits</button>
+                <button class="nav-btn" onclick="safeNavigate('garden')">Projects</button>
+                <button class="nav-btn" onclick="safeNavigate('habits')">Habits</button>
             </nav>
-            <button class="nav-btn" onclick="logout()">Logout</button>
+            
+            <button id="account-btn" class="nav-btn account-btn" onclick="handleAccountClick()">👤 Login</button>
         </div>
     </header>
 
@@ -30,11 +33,13 @@
             <section id="home" class="page-section active" style="justify-content:center; align-items:center;">
                 <h1 style="font-size: 5rem; text-align: center; color: transparent; background: linear-gradient(to bottom, #fff, var(--p-leaf-lime)); -webkit-background-clip: text; background-clip: text; margin-bottom: 20px;">Welcome<br>Gardener</h1>
                 <p style="color:var(--text-secondary); max-width: 400px; text-align: center; line-height: 1.6;">Track habits, grow plants, and earn coins.<br>Data is stored securely for your user account.</p>
+                
                 <div style="margin-top: 30px; display:flex; gap: 15px;">
-                    <button class="tool-btn" onclick="openShopDialog()" title="Seed Shop" style="background: var(--p-leaf-mid);">🛒</button>
-                    <button class="tool-btn" onclick="showPage('garden')" title="Go to Garden" style="background: var(--p-pot-terra);">🌱</button>
+                    <button class="tool-btn" onclick="safeAction(openShopDialog)" title="Seed Shop" style="background: var(--p-leaf-mid);">🛒</button>
+                    <button class="tool-btn" onclick="safeNavigate('garden')" title="Go to Garden" style="background: var(--p-pot-terra);">🌱</button>
                 </div>
             </section>
+
             <section id="garden" class="page-section">
                 <div class="content-wrapper">
                     <div class="garden-toolbar">
@@ -45,6 +50,7 @@
                     <div class="garden-grid" id="garden-grid-container"></div>
                 </div>
             </section>
+
             <section id="habits" class="page-section">
                 <div class="content-wrapper">
                     <div class="garden-toolbar">
@@ -68,6 +74,7 @@
                 <button type="submit" class="btn-primary" style="width:100%;" id="auth-submit-btn">Login</button>
             </form>
             <span class="auth-toggle" onclick="toggleAuthMode()" id="auth-toggle-text">New here? Create Account</span>
+            <button class="btn-secondary" style="margin-top:15px; width:100%; border:none; color:#aaa; font-size:0.8rem;" onclick="document.getElementById('auth-dialog').close()">Continue as Guest</button>
         </div>
     </dialog>
 

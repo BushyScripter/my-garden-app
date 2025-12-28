@@ -1,4 +1,5 @@
 /* --- Base Variables --- */
+
 :root {
     --bg-wall: #1a261a;
     --bg-highlight: rgba(255,255,255,0.05);
@@ -84,7 +85,39 @@ header {
     font-size: 0.9rem; 
 }
 .coin-anim { animation: popCoin 0.3s ease-in-out; }
+/* Add these new styles for the Account Button */
+.account-btn {
+    border: 1px solid var(--glass-border);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
 
+.account-btn.logged-in {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: #fff;
+}
+
+/* SPECIAL PREMIUM TITLE STYLE */
+.account-btn.premium {
+    background: linear-gradient(45deg, #FFD700, #FFA000); /* Gold */
+    color: #000;
+    border: none;
+    font-weight: 900;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+    animation: shine 3s infinite;
+}
+
+@keyframes shine {
+    0% { filter: brightness(1); }
+    50% { filter: brightness(1.2); }
+    100% { filter: brightness(1); }
+}
+
+/* Ensure Home is always centered */
+#home {
+    display: flex; /* Override the default display:none logic for Home if needed, though JS handles class toggle */
+}
 /* Premium Button */
 .premium-btn-header {
     background: linear-gradient(135deg, #FFD700, #FFA000);

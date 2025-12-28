@@ -1,36 +1,122 @@
 /* CONFIGURATION */
 const CONFIG = {
-    // Put your AdSense ID here if you have one
     ADSENSE_CLIENT_ID: "ca-pub-YOUR_ID_HERE"
 };
 
 const MAX_FREE_ITEMS = 3;
 let token = null; 
 let gardenData = { coins: 0, unlockedPlants: ["basic"], plants: [], habits: [] };
-let isPremiumUser = false; // Tracks if user paid
+let isPremiumUser = false;
 let isDeleteMode = false; let editingPlantId = null; let tempChecklist = []; let selectedPlantType = "basic"; let isRegistering = false;
 
 const plantTypes = { "basic": { name: "Basic Leaf", price: 0, color: "var(--p-leaf-light)" }, "sun": { name: "Sunflower", price: 10, color: "var(--p-flower)" }, "rose": { name: "Wild Rose", price: 20, color: "var(--p-rose)" }, "cactus":{ name: "Cactus", price: 30, color: "var(--p-cactus)" } };
 
-/* --- AUTH & API --- */
+/* --- AUTH & NAVIGATION --- */
+
+// 1. Initialize without forcing login
 function initAuth() {
     const storedToken = localStorage.getItem('garden_token');
     if(storedToken) {
         token = storedToken;
-        loadData();
+        loadData(); // This will eventually update the UI
     } else {
-        document.getElementById('auth-dialog').showModal();
+        // User is a guest. Don't show modal, just update UI to Guest state.
+        updateAccountUI();
     }
 }
-function toggleAuthMode() { isRegistering = !isRegistering; document.getElementById('auth-title').innerText = isRegistering ? "Create Account" : "Login to Garden"; document.getElementById('auth-submit-btn').innerText = isRegistering ? "Register" : "Login"; document.getElementById('auth-toggle-text').innerText = isRegistering ? "Already have an account? Login" : "New here? Create Account"; }
 
-// --- FETCH WRAPPER (This is the critical fix) ---
+// 2. Gatekeeper function: Returns true if logged in, else opens dialog
+function checkAuth() {
+    if (!token) {
+        document.getElementById('auth-dialog').showModal();
+        return false;
+    }
+    return true;
+}
+
+// 3. Safe Navigation Wrapper (Use this for Nav buttons)
+function safeNavigate(pageId) {
+    if(pageId === 'home') {
+        showPage('home');
+    } else {
+        if(checkAuth()) {
+            showPage(pageId);
+        }
+    }
+}
+
+// 4. Safe Action Wrapper (Use this for Shop, buttons, etc)
+function safeAction(callback) {
+    if(checkAuth()) {
+        callback();
+    }
+}
+
+function toggleAuthMode() { 
+    isRegistering = !isRegistering; 
+    document.getElementById('auth-title').innerText = isRegistering ? "Create Account" : "Login to Garden"; 
+    document.getElementById('auth-submit-btn').innerText = isRegistering ? "Register" : "Login"; 
+    document.getElementById('auth-toggle-text').innerText = isRegistering ? "Already have an account? Login" : "New here? Create Account"; 
+}
+
+/* --- UI UPDATES --- */
+
+function updateAccountUI() {
+    const accBtn = document.getElementById('account-btn');
+    const premiumBtn = document.getElementById('premium-btn');
+
+    if (!token) {
+        // GUEST STATE
+        accBtn.innerHTML = "👤 Login";
+        accBtn.className = "nav-btn account-btn";
+        premiumBtn.style.display = "none"; // Hide premium upsell for guests
+        document.getElementById('coin-display').style.opacity = "0"; // Hide coins
+    } else {
+        // LOGGED IN STATE
+        document.getElementById('coin-display').style.opacity = "1";
+        
+        if (isPremiumUser) {
+            // PREMIUM USER
+            accBtn.innerHTML = "👑 Premium Member";
+            accBtn.className = "nav-btn account-btn premium";
+            premiumBtn.style.display = "none"; // Hide upsell (already premium)
+        } else {
+            // FREE USER
+            accBtn.innerHTML = "👤 Account";
+            accBtn.className = "nav-btn account-btn logged-in";
+            premiumBtn.style.display = "block"; // Show upsell
+            premiumBtn.innerText = "👑 Go Premium";
+        }
+    }
+}
+
+function handleAccountClick() {
+    if (!token) {
+        document.getElementById('auth-dialog').showModal();
+    } else {
+        // If logged in, clicking account asks to logout
+        if(confirm("Log out of your account?")) {
+            logout();
+        }
+    }
+}
+
+function handlePremiumClick() {
+    if(checkAuth()) {
+        if(isPremiumUser) {
+            openCustomerPortal();
+        } else {
+            startCheckout();
+        }
+    }
+}
+
+// --- FETCH WRAPPER ---
 async function apiCall(endpoint, method, body = null) {
     const headers = { 'Content-Type': 'application/json' };
     if(token) headers['x-access-token'] = token;
     
     try {
-        // NOTE: We use relative path '/api/...' so it works on Localhost AND Render
         const res = await fetch(`/api/${endpoint}`, {
             method: method,
             headers: headers,
@@ -56,49 +142,44 @@ document.getElementById('auth-form').addEventListener('submit', async (e) => {
             token = res.token;
             localStorage.setItem('garden_token', token);
             gardenData = res.data;
-            isPremiumUser = res.isPremium; // Capture status
-            updatePremiumUI();
+            isPremiumUser = res.isPremium;
             document.getElementById('auth-dialog').close();
+            
+            // Sync UI
+            updateAccountUI();
             renderAll();
             updateCoinDisplay();
+            showPage('home'); // Stay on home after login
         }
     }
 });
 
-function logout() { localStorage.removeItem('garden_token'); location.reload(); }
+function logout() { 
+    localStorage.removeItem('garden_token'); 
+    location.reload(); 
+}
 
 async function saveData() {
     updateCoinDisplay();
     await apiCall('sync', 'POST', gardenData);
 }
+
 async function loadData() {
     const res = await apiCall('sync', 'GET');
     if(res) { 
         gardenData = res; 
         isPremiumUser = res.isPremium;
-        updatePremiumUI();
+        updateAccountUI(); // Update buttons based on premium status
         renderAll(); 
         updateCoinDisplay(); 
     }
 }
 
-/* --- PREMIUM UI LOGIC --- */
-function updatePremiumUI() {
-    const btn = document.querySelector('.premium-btn-header');
-    if (isPremiumUser) {
-        btn.innerText = "⭐ Manage Sub";
-        btn.onclick = openCustomerPortal;
-        btn.style.background = "linear-gradient(135deg, #E91E63, #9C27B0)";
-    } else {
-        btn.innerText = "👑 Go Premium";
-        btn.onclick = startCheckout;
-        btn.style.background = "linear-gradient(135deg, #FFD700, #FFA000)";
-    }
-}
+// Payment Functions
 async function startCheckout() {
     const res = await apiCall('create-checkout-session', 'POST');
     if (res && res.url) window.location.href = res.url;
-    else alert("Checkout Error. Check server console.");
+    else alert("Checkout Error.");
 }
 async function openCustomerPortal() {
     const res = await apiCall('create-portal-session', 'POST');
@@ -163,9 +244,9 @@ function renderHabits() {
 function showPage(id) { document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active')); document.getElementById(id).classList.add('active'); if(isDeleteMode) toggleDeleteMode(); }
 function toggleDeleteMode() { isDeleteMode=!isDeleteMode; document.body.classList.toggle('delete-mode', isDeleteMode); document.getElementById('delete-mode-btn').classList.toggle('delete-mode-active', isDeleteMode); document.getElementById('delete-mode-btn-2').classList.toggle('delete-mode-active', isDeleteMode); renderHabits(); }
 
-// LIMIT CHECK ADDED HERE
 function openPlantDialog(id=null) { 
     if(isDeleteMode)return; 
+    if(!checkAuth()) return; // GATEKEEPER
     if(!id && !isPremiumUser && gardenData.plants.length>=MAX_FREE_ITEMS){document.getElementById('premium-dialog').showModal();return;} 
     const d=document.getElementById('plant-dialog'); editingPlantId=id; tempChecklist=[]; selectedPlantType="basic"; 
     if(id){ const p=gardenData.plants.find(x=>x.id===id); document.getElementById('plant-title').value=p.title; selectedPlantType=p.type||"basic"; tempChecklist=JSON.parse(JSON.stringify(p.tasks||[])); } else { document.getElementById('plant-form').reset(); } 
@@ -181,9 +262,9 @@ function removeTempTask(i){ tempChecklist.splice(i,1); renderChecklistUI(); }
 function handlePlantClick(id) { if(isDeleteMode) { gardenData.plants=gardenData.plants.filter(p=>p.id!==id); saveData(); renderPlants(); } else openPlantDialog(id); }
 function renderPlantTypeSelector() { const c=document.getElementById('plant-type-selector'); c.innerHTML=''; for(const [k,v] of Object.entries(plantTypes)){ if(gardenData.unlockedPlants.includes(k)){ const d=document.createElement('div'); d.className=`shop-item unlocked ${selectedPlantType===k?'selected':''}`; d.innerHTML=`<div style="font-size:1.5rem; color:${v.color}">✿</div><div>${v.name}</div>`; d.onclick=()=>{selectedPlantType=k;renderPlantTypeSelector();}; c.appendChild(d); } } }
 
-// LIMIT CHECK ADDED HERE
 function openHabitDialog() { 
     if(isDeleteMode)return; 
+    if(!checkAuth()) return; // GATEKEEPER
     if(!isPremiumUser && gardenData.habits.length>=MAX_FREE_ITEMS){document.getElementById('premium-dialog').showModal();return;} 
     document.getElementById('habit-form').reset(); document.getElementById('habit-dialog').showModal(); 
 }
@@ -191,7 +272,10 @@ document.getElementById('habit-form').addEventListener('submit', (e)=>{ e.preven
 function toggleHabit(id,d){ if(isDeleteMode)return; const h=gardenData.habits.find(x=>x.id==id); if(h){ if(h.history[d]){ delete h.history[d]; gardenData.coins=Math.max(0,gardenData.coins-1); } else { h.history[d]=true; gardenData.coins++; } saveData(); renderHabits(); } }
 function deleteHabit(id){ gardenData.habits=gardenData.habits.filter(h=>h.id!==id); saveData(); renderHabits(); }
 
-function openShopDialog() { const c=document.getElementById('shop-grid-container'); c.innerHTML=''; for(const [k,v] of Object.entries(plantTypes)){ if(k==='basic')continue; const u=gardenData.unlockedPlants.includes(k); const d=document.createElement('div'); d.className=`shop-item ${u?'unlocked':''}`; d.innerHTML=`<span class="shop-price">${v.price}🪙</span><span class="owned-badge">Owned</span><div style="font-size:2rem; color:${v.color}">✿</div><div>${v.name}</div>`; if(!u) d.onclick=()=>buyItem(k,v.price); c.appendChild(d); } document.getElementById('shop-dialog').showModal(); }
+function openShopDialog() { 
+    if(!checkAuth()) return; // GATEKEEPER
+    const c=document.getElementById('shop-grid-container'); c.innerHTML=''; for(const [k,v] of Object.entries(plantTypes)){ if(k==='basic')continue; const u=gardenData.unlockedPlants.includes(k); const d=document.createElement('div'); d.className=`shop-item ${u?'unlocked':''}`; d.innerHTML=`<span class="shop-price">${v.price}🪙</span><span class="owned-badge">Owned</span><div style="font-size:2rem; color:${v.color}">✿</div><div>${v.name}</div>`; if(!u) d.onclick=()=>buyItem(k,v.price); c.appendChild(d); } document.getElementById('shop-dialog').showModal(); 
+}
 function buyItem(k,p){ if(gardenData.coins>=p){ gardenData.coins-=p; gardenData.unlockedPlants.push(k); saveData(); openShopDialog(); }else{alert("Need more coins!");} }
 
 document.addEventListener('DOMContentLoaded', () => {
