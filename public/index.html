@@ -5,56 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Digital Garden</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800;900&display=swap" rel="stylesheet">
-    <script src="https://js.stripe.com/v3/"></script>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_ID_HERE" crossorigin="anonymous"></script>
-
-    <style>
-        /* [STYLES REMAIN EXACTLY THE SAME AS PREVIOUS VERSION] */
-        :root { --bg-wall: #1a261a; --bg-highlight: rgba(255,255,255,0.05); --glass-bg: rgba(30, 45, 30, 0.7); --glass-border: rgba(100, 255, 150, 0.2); --text-primary: #f0f5f0; --text-secondary: #a0b5a0; --p-leaf-dark: #1B5E20; --p-leaf-mid: #2E7D32; --p-leaf-lime: #AEEA00; --p-pot-terra: #FF5722; --p-pot-clay: #D84315; --p-pot-sand: #FFB74D; --p-flower: #FFD600; --p-rose: #E91E63; --p-cactus: #004D40; --f-grape: #9C27B0; --f-tomato: #D50000; --fire: #FF3D00; --coin: #FFD700; }
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; background-color: var(--bg-wall); font-family: 'Montserrat', sans-serif; overflow: hidden; color: var(--text-primary); transition: background-color 0.5s ease; }
-        header { position: fixed; top: 0; left: 0; width: 100%; padding: 15px 30px; box-sizing: border-box; z-index: 1000; display: flex; justify-content: space-between; align-items: center; background: rgba(20, 30, 20, 0.6); backdrop-filter: blur(10px); border-bottom: 1px solid var(--glass-border); }
-        .logo { font-weight: 900; font-size: 1.2rem; letter-spacing: 1px; color: #fff; text-transform: uppercase; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: opacity 0.2s; } .logo:hover { opacity: 0.8; }
-        .header-controls { display: flex; align-items: center; gap: 15px; }
-        .coin-display { background: rgba(0,0,0,0.4); padding: 5px 12px; border-radius: 20px; font-weight: 700; display: flex; align-items: center; gap: 5px; color: var(--coin); border: 1px solid var(--coin); font-size: 0.9rem; }
-        .coin-anim { animation: popCoin 0.3s ease-in-out; }
-        .premium-btn-header { background: linear-gradient(135deg, #FFD700, #FFA000); color: #000; border: none; padding: 8px 16px; border-radius: 20px; font-weight: 800; font-size: 0.8rem; cursor: pointer; text-transform: uppercase; box-shadow: 0 0 10px rgba(255, 215, 0, 0.4); transition: transform 0.2s; } .premium-btn-header:hover { transform: scale(1.05); }
-        .nav-group { display: flex; gap: 8px; }
-        .nav-btn { background: transparent; border: 1px solid transparent; cursor: pointer; color: var(--text-secondary); font-weight: 700; font-size: 0.8rem; text-transform: uppercase; padding: 8px 16px; border-radius: 20px; transition: all 0.3s ease; } .nav-btn:hover { color: #fff; background: var(--bg-highlight); } .nav-btn.active { background-color: var(--p-leaf-mid); color: #fff; box-shadow: 0 4px 15px rgba(46, 125, 50, 0.4); }
-        .scene-container { position: relative; width: 100%; height: 100%; background: radial-gradient(circle at center top, var(--bg-highlight) 0%, var(--bg-wall) 70%); }
-        .bg-particles-wrapper { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
-        .leaf-particle { position: absolute; opacity: 0.2; fill: var(--p-leaf-light); mix-blend-mode: overlay; }
-        .page-section { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; opacity: 0; padding-top: 70px; padding-bottom: 90px; box-sizing: border-box; transition: opacity 0.4s ease; } .page-section.active { display: flex; opacity: 1; }
-        .content-wrapper { width: 100%; height: 100%; overflow-y: auto; display: flex; flex-direction: column; align-items: center; padding: 30px 20px; box-sizing: border-box; }
-        .garden-toolbar { display: flex; gap: 15px; margin-bottom: 30px; background: var(--glass-bg); padding: 10px 20px; border-radius: 50px; border: 1px solid var(--glass-border); backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 20; position: sticky; top: 0; }
-        .tool-btn { background: rgba(255,255,255,0.1); border: 2px solid transparent; color: #fff; font-size: 1.4rem; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; transition: all 0.2s; display: flex; justify-content: center; align-items: center; } .tool-btn:hover { background: var(--p-leaf-mid); transform: translateY(-3px); } .tool-btn.delete-mode-active { background: var(--p-pot-terra); animation: pulseRed 1.5s infinite; }
-        .garden-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 40px; width: 100%; max-width: 1200px; padding-bottom: 50px; }
-        .potted-plant-card { position: relative; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); } .potted-plant-card:hover { transform: translateY(-10px); }
-        .plant-visual-container { width: 100%; height: 200px; position: relative; display: flex; justify-content: center; align-items: flex-end; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5)); } .interactive-plant-svg { width: 85%; height: auto; overflow: visible; }
-        .plant-info { background: var(--glass-bg); backdrop-filter: blur(10px); padding: 15px 20px; border-radius: 15px; border: 1px solid var(--glass-border); text-align: center; width: 90%; margin-top: -20px; z-index: 5; box-shadow: 0 5px 20px rgba(0,0,0,0.2); position: relative;}
-        .growth-badge { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--p-leaf-dark); color: var(--p-leaf-lime); font-size: 0.65rem; text-transform: uppercase; font-weight: 800; padding: 4px 10px; border-radius: 20px; border: 1px solid var(--p-leaf-lime); }
-        .progress-bar-container { width: 100%; height: 6px; background: rgba(0,0,0,0.3); border-radius: 3px; margin-top: 8px; overflow: hidden; } .progress-bar-fill { height: 100%; background: var(--p-leaf-lime); transition: width 0.3s; }
-        .watering-can-anim { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); font-size: 4rem; opacity: 0; pointer-events: none; z-index: 20; } .potted-plant-card.is-watering .watering-can-anim { animation: waterPlant 1.5s ease-in-out forwards; } .potted-plant-card.is-watering .interactive-plant-svg { animation: plantShake 0.5s ease-in-out infinite; }
-        .habits-container { display: flex; flex-direction: column; gap: 30px; width: 100%; max-width: 900px; padding-bottom: 50px; }
-        .habit-row { position: relative; height: 160px; background: rgba(255,255,255,0.03); border-radius: 20px; border: 1px solid var(--glass-border); display: flex; align-items: center; padding: 0 20px; transition: background 0.2s; } .habit-row:hover { background: rgba(255,255,255,0.06); }
-        .habit-info { width: 30%; z-index: 2; position: relative; display: flex; flex-direction: column; justify-content: center; height: 100%;} .habit-title { font-weight: 800; font-size: 1.2rem; color: #fff; margin: 0 0 10px 0; }
-        .habit-stats { display: flex; flex-direction: column; gap: 5px; font-size: 0.75rem; color: #ccc; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 8px; width: fit-content;} .stat-item { display: flex; align-items: center; gap: 6px; } .stat-val { font-weight: 800; color: #fff; } .fire-active { color: var(--fire); animation: pulseRed 2s infinite; text-shadow: 0 0 5px var(--fire); }
-        .vine-container { flex-grow: 1; height: 100%; position: relative; } .vine-svg { width: 100%; height: 100%; overflow: visible; } .fruit-group { cursor: pointer; } .fruit-circle { transition: fill 0.2s, opacity 0.2s; stroke: rgba(0,0,0,0.3); stroke-width: 1px; } .fruit-collected { opacity: 1; filter: drop-shadow(0 0 5px currentColor); } .fruit-uncollected { opacity: 0.2; filter: grayscale(1); } .fruit-group:hover .fruit-circle { stroke: #fff; stroke-width: 2px; } .day-label { font-size: 10px; fill: var(--text-secondary); text-anchor: middle; font-weight: 600; opacity: 0.7;}
-        .ad-container { position: fixed; bottom: 0; left: 0; width: 100%; height: 90px; background: rgba(0,0,0,0.9); z-index: 2000; display: flex; justify-content: center; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); } .ad-placeholder { color: #555; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
-        dialog { background: var(--bg-wall); color: var(--text-primary); border: 2px solid var(--p-leaf-mid); border-radius: 20px; padding: 30px; width: 90%; max-width: 500px; box-shadow: 0 25px 50px rgba(0,0,0,0.8); } dialog::backdrop { background: rgba(0,0,0,0.9); backdrop-filter: blur(8px); }
-        .form-group { margin-bottom: 20px; } .form-group label { display: block; margin-bottom: 8px; font-weight: 700; color: var(--p-leaf-lime); } .form-group input, textarea, select { width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: #fff; font-family: inherit; box-sizing: border-box; }
-        .checklist-container { margin-top: 10px; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; } .checklist-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; padding: 5px; background: rgba(255,255,255,0.05); border-radius: 5px; } .checklist-item input[type="checkbox"] { width: auto; cursor: pointer; accent-color: var(--p-leaf-lime); width: 20px; height: 20px;} .checklist-item span { flex-grow: 1; font-size: 0.9rem; } .checklist-item.done span { text-decoration: line-through; color: var(--text-secondary); } .checklist-add-row { display: flex; gap: 10px; margin-top: 10px; } .btn-small { background: var(--p-leaf-mid); border: none; color: white; border-radius: 5px; cursor: pointer; padding: 0 15px; }
-        .shop-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; } .shop-item { background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); padding: 10px; border-radius: 10px; text-align: center; cursor: pointer; opacity: 0.5; position: relative;} .shop-item.unlocked { opacity: 1; border-color: var(--p-leaf-lime); } .shop-item.selected { background: rgba(174, 234, 0, 0.2); border: 2px solid var(--p-leaf-lime); } .shop-item:hover { transform: translateY(-2px); } .shop-price { position: absolute; top: -5px; right: -5px; background: var(--coin); color: #000; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; font-weight: bold; } .owned-badge { display: none; position: absolute; top: -5px; right: -5px; background: var(--p-leaf-mid); color: #fff; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; } .shop-item.unlocked .shop-price { display: none; } .shop-item.unlocked .owned-badge { display: block; }
-        .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; } .btn-primary { background: var(--p-leaf-mid); color: #fff; border: none; padding: 12px 24px; border-radius: 30px; font-weight: 700; cursor: pointer; } .btn-secondary { background: transparent; color: var(--text-secondary); border: 2px solid var(--glass-border); padding: 12px 24px; border-radius: 30px; cursor: pointer; }
-        .auth-container { text-align: center; } .auth-toggle { color: var(--p-leaf-lime); cursor: pointer; text-decoration: underline; margin-top: 10px; display: inline-block;} .premium-upgrade-btn { background: linear-gradient(135deg, #FFD700, #FFA000); color: #000; border: none; padding: 15px 30px; border-radius: 30px; font-weight: 900; font-size: 1.1rem; cursor: pointer; width: 100%; margin-top: 20px; box-shadow: 0 5px 20px rgba(255, 215, 0, 0.3); transition: transform 0.2s;} .premium-upgrade-btn:hover { transform: scale(1.02); }
-        @keyframes pulseRed { 0% { text-shadow: 0 0 5px var(--fire); transform: scale(1); } 50% { text-shadow: 0 0 15px var(--fire); transform: scale(1.2); } 100% { text-shadow: 0 0 5px var(--fire); transform: scale(1); } } @keyframes waterPlant { 0% { opacity: 1; transform: translateX(-50%) rotate(0deg); } 50% { transform: translateX(-50%) rotate(-30deg); } 100% { opacity: 0; transform: translateX(-50%) rotate(0deg); } } @keyframes plantShake { 0% { transform: rotate(0deg); } 25% { transform: rotate(5deg); } 75% { transform: rotate(-5deg); } 100% { transform: rotate(0deg); } } @keyframes popCoin { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: scale(1); } }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <header>
         <div class="logo" onclick="showPage('home')">🌿 Digital Garden</div>
         <div class="header-controls">
-            <button class="premium-btn-header" onclick="goToStripe()">👑 Premium</button>
+            <button class="premium-btn-header" onclick="startCheckout()">👑 Premium</button>
             <div class="coin-display" id="coin-display">🪙 <span id="coin-count">0</span></div>
             <nav class="nav-group">
                 <button class="nav-btn active" onclick="showPage('home')">Home</button>
@@ -133,162 +92,8 @@
     </dialog>
 
     <dialog id="shop-dialog"><h2 style="color:var(--p-leaf-lime); margin-top:0;">Seed Shop</h2><p>Spend coins to unlock new plant types.</p><div class="shop-grid" id="shop-grid-container"></div><div class="dialog-actions"><button class="btn-secondary" onclick="document.getElementById('shop-dialog').close()">Close</button></div></dialog>
-    <dialog id="premium-dialog"><div style="text-align: center;"><h1 style="font-size: 3rem; margin: 0;">👑</h1><h2>Upgrade to Premium</h2><p>Unlock unlimited habits, plants, and exclusive seeds!</p><button class="premium-upgrade-btn" onclick="goToStripe()">Get Premium - $5/mo</button><br><br><button class="btn-secondary" onclick="document.getElementById('premium-dialog').close()">No Thanks</button></div></dialog>
+    <dialog id="premium-dialog"><div style="text-align: center;"><h1 style="font-size: 3rem; margin: 0;">👑</h1><h2>Upgrade to Premium</h2><p>Unlock unlimited habits, plants, and exclusive seeds!</p><button class="premium-upgrade-btn" onclick="startCheckout()">Get Premium - $5/mo</button><br><br><button class="btn-secondary" onclick="document.getElementById('premium-dialog').close()">No Thanks</button></div></dialog>
 
-    <script>
-        /* CONFIGURATION */
-        const CONFIG = { STRIPE_LINK: "https://buy.stripe.com/test_12345", ADSENSE_CLIENT_ID: "ca-pub-YOUR_ID_HERE" };
-        const MAX_FREE_ITEMS = 3;
-        let token = null; // JWT placeholder
-        let gardenData = { coins: 0, unlockedPlants: ["basic"], plants: [], habits: [] };
-        let isDeleteMode = false; let editingPlantId = null; let tempChecklist = []; let selectedPlantType = "basic"; let isRegistering = false;
-
-        const plantTypes = { "basic": { name: "Basic Leaf", price: 0, color: "var(--p-leaf-light)" }, "sun": { name: "Sunflower", price: 10, color: "var(--p-flower)" }, "rose": { name: "Wild Rose", price: 20, color: "var(--p-rose)" }, "cactus":{ name: "Cactus", price: 30, color: "var(--p-cactus)" } };
-
-        /* AUTH & API (Connecting to the backend we built) */
-        function initAuth() {
-            const storedToken = localStorage.getItem('garden_token');
-            if(storedToken) {
-                token = storedToken;
-                loadData();
-            } else {
-                document.getElementById('auth-dialog').showModal();
-            }
-        }
-        function toggleAuthMode() { isRegistering = !isRegistering; document.getElementById('auth-title').innerText = isRegistering ? "Create Account" : "Login to Garden"; document.getElementById('auth-submit-btn').innerText = isRegistering ? "Register" : "Login"; document.getElementById('auth-toggle-text').innerText = isRegistering ? "Already have an account? Login" : "New here? Create Account"; }
-
-        // --- FETCH WRAPPERS ---
-        async function apiCall(endpoint, method, body = null) {
-            const headers = { 'Content-Type': 'application/json' };
-            if(token) headers['x-access-token'] = token;
-            
-            try {
-                const res = await fetch(`http://localhost:3000/api/${endpoint}`, {
-                    method: method,
-                    headers: headers,
-                    body: body ? JSON.stringify(body) : null
-                });
-                return await res.json();
-            } catch(err) { console.error("API Error", err); return null; }
-        }
-
-        document.getElementById('auth-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('auth-email').value;
-            const password = document.getElementById('auth-pass').value;
-
-            if(isRegistering) {
-                const res = await apiCall('register', 'POST', { email, password });
-                if(res.error) alert(res.error);
-                else { alert("Account created! Please login."); toggleAuthMode(); }
-            } else {
-                const res = await apiCall('login', 'POST', { email, password });
-                if(res.error) alert(res.error);
-                else {
-                    token = res.token;
-                    localStorage.setItem('garden_token', token);
-                    gardenData = res.data;
-                    document.getElementById('auth-dialog').close();
-                    renderAll();
-                    updateCoinDisplay();
-                }
-            }
-        });
-
-        function logout() { localStorage.removeItem('garden_token'); location.reload(); }
-
-        async function saveData() {
-            // Optimistic update (UI updates immediately)
-            updateCoinDisplay();
-            // Background sync
-            await apiCall('sync', 'POST', gardenData);
-        }
-        async function loadData() {
-            const data = await apiCall('sync', 'GET');
-            if(data) { gardenData = data; renderAll(); updateCoinDisplay(); }
-        }
-
-        /* --- STANDARD LOGIC --- */
-        function updateCoinDisplay() {
-            document.getElementById('coin-count').innerText = gardenData.coins;
-            const container = document.getElementById('coin-display');
-            container.classList.remove('coin-anim'); void container.offsetWidth; container.classList.add('coin-anim');
-        }
-        function goToStripe() { window.open(CONFIG.STRIPE_LINK, '_blank'); }
-        function initAdSense() {
-            const container = document.getElementById('adsense-container');
-            if(CONFIG.ADSENSE_CLIENT_ID && CONFIG.ADSENSE_CLIENT_ID !== "YOUR_ID_HERE") {
-                container.innerHTML = `<ins class="adsbygoogle" style="display:block; width: 728px; height: 90px;" data-ad-client="${CONFIG.ADSENSE_CLIENT_ID}" data-ad-slot="1234567890" data-ad-format="auto" data-full-width-responsive="true"></ins>`;
-                try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
-            }
-        }
-        function renderAll() { renderPlants(); renderHabits(); }
-        const toLocalISO = (date) => { const offset = date.getTimezoneOffset() * 60000; return new Date(date.getTime() - offset).toISOString().split('T')[0]; };
-
-        // Plants
-        function getPlantSVG(growthStage, type) {
-            const potColor = "var(--p-pot-terra)"; const pot = `<path d="M10,0 L90,0 L80,60 C80,70 20,70 20,60 Z" fill="${potColor}" transform="translate(50,160)"/>`;
-            let plant = `<circle cx="100" cy="160" r="5" fill="var(--p-leaf-lime)"/>`;
-            if (growthStage === 1) { plant = `<g transform="translate(100,160)"><path d="M0,0 Q5,-30 0,-60" stroke="var(--p-leaf-mid)" stroke-width="4" fill="none"/><circle cx="0" cy="-60" r="10" fill="var(--p-leaf-light)"/></g>`; } 
-            else if (growthStage >= 2) {
-                let bloom = ''; if(type === 'sun') bloom = `<circle cx="0" cy="-110" r="25" fill="${plantTypes.sun.color}"/><circle cx="0" cy="-110" r="10" fill="#5D4037"/>`; else if (type === 'rose') bloom = `<circle cx="0" cy="-110" r="20" fill="${plantTypes.rose.color}"/><path d="M-10,-110 Q0,-130 10,-110" stroke="white" fill="none" opacity="0.3"/>`; else if (type === 'cactus') bloom = `<rect x="-15" y="-120" width="30" height="60" rx="15" fill="${plantTypes.cactus.color}"/><line x1="-15" y1="-100" x2="-20" y2="-105" stroke="white"/><line x1="15" y1="-80" x2="20" y2="-85" stroke="white"/>`; else bloom = `<circle cx="0" cy="-100" r="20" fill="var(--p-leaf-mid)"/><circle cx="0" cy="-110" r="8" fill="var(--p-flower)"/>`;
-                plant = `<g transform="translate(100,160)"><path d="M0,0 Q-10,-50 0,-100" stroke="var(--p-leaf-dark)" stroke-width="5" fill="none"/>${bloom}</g>`;
-            } return `<svg class="interactive-plant-svg" viewBox="0 0 200 230">${pot}${plant}</svg>`;
-        }
-        function renderPlants() {
-            const container = document.getElementById('garden-grid-container'); container.innerHTML = '';
-            gardenData.plants.forEach(plant => {
-                const total = plant.tasks ? plant.tasks.length : 0; const done = plant.tasks ? plant.tasks.filter(t => t.done).length : 0; const pct = total === 0 ? 0 : (done / total) * 100; const stage = Math.min(plant.growth, 2);
-                const card = document.createElement('div'); card.className = 'potted-plant-card'; card.onclick = () => handlePlantClick(plant.id);
-                card.innerHTML = `<div class="watering-can-anim">🚿</div><div class="plant-visual-container">${getPlantSVG(plant.growth, plant.type)}</div><div class="plant-info"><span class="growth-badge">${["Seed", "Sprout", "Bloom"][stage]}</span><h3>${plant.title}</h3><div class="progress-bar-container"><div class="progress-bar-fill" style="width:${pct}%"></div></div><div style="font-size:0.7rem; color:#aaa; margin-top:4px;">${done}/${total} Tasks</div></div>`;
-                container.appendChild(card);
-            });
-        }
-
-        // Habits
-        function getHabitStats(history) {
-            let curr = 0; for(let i=0; i<365; i++) { const d=new Date(); d.setDate(new Date().getDate()-i); const k=toLocalISO(d); if(i===0 && !history[k]) continue; if(history[k]) curr++; else break; }
-            let max=0; let t=1; const keys=Object.keys(history).sort(); if(keys.length>0) { max=1; for(let i=1;i<keys.length;i++){ if((new Date(keys[i])-new Date(keys[i-1]))/(86400000)===1) t++; else t=1; if(t>max) max=t; }}
-            return { current: curr, max: max, total: keys.length };
-        }
-        function renderHabits() {
-            const container = document.getElementById('habits-container'); container.innerHTML = ''; const dates=[]; for(let i=6; i>=0; i--){ const d=new Date(); d.setDate(new Date().getDate()-i); dates.push(toLocalISO(d)); }
-            gardenData.habits.forEach(habit => {
-                const stats = getHabitStats(habit.history); const row = document.createElement('div'); row.className = 'habit-row'; if(isDeleteMode) row.onclick = () => deleteHabit(habit.id);
-                let svg = `<path d="M0,70 Q100,20 200,70 T400,70 T600,70 T800,70" fill="none" stroke="#5D4037" stroke-width="4"/>`;
-                dates.forEach((d, i) => { const done=habit.history[d]; const x=50+(i*110); const y=i%2===0?80:60; svg+=`<g class="fruit-group" onclick="toggleHabit('${habit.id}', '${d}')"><line x1="${x}" y1="70" x2="${x}" y2="${y}" stroke="#5D4037" stroke-width="2"/><circle cx="${x}" cy="${y}" r="14" fill="${habit.type==='tomato'?'var(--f-tomato)':'var(--f-grape)'}" class="fruit-circle ${done?'fruit-collected':'fruit-uncollected'}" /><text x="${x}" y="${y+30}" class="day-label">${d.slice(8,10)}</text></g>`; });
-                row.innerHTML = `<div class="habit-info"><h3 class="habit-title">${habit.title}</h3><div class="habit-stats"><div class="stat-item"><span class="${stats.current>0?'fire-active':''}">🔥</span> Streak: <span class="stat-val">${stats.current}</span></div><div class="stat-item"><span>🏆</span> Best: <span class="stat-val">${stats.max}</span></div><div class="stat-item"><span>📅</span> Total: <span class="stat-val">${stats.total}</span></div></div></div><div class="vine-container"><svg class="vine-svg" viewBox="0 0 800 140" preserveAspectRatio="xMidYMid meet">${svg}</svg></div>`;
-                container.appendChild(row);
-            });
-        }
-
-        // Logic
-        function showPage(id) { document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active')); document.getElementById(id).classList.add('active'); if(isDeleteMode) toggleDeleteMode(); }
-        function toggleDeleteMode() { isDeleteMode=!isDeleteMode; document.body.classList.toggle('delete-mode', isDeleteMode); document.getElementById('delete-mode-btn').classList.toggle('delete-mode-active', isDeleteMode); document.getElementById('delete-mode-btn-2').classList.toggle('delete-mode-active', isDeleteMode); renderHabits(); }
-        
-        function openPlantDialog(id=null) { if(isDeleteMode)return; if(!id && gardenData.plants.length>=MAX_FREE_ITEMS){document.getElementById('premium-dialog').showModal();return;} const d=document.getElementById('plant-dialog'); editingPlantId=id; tempChecklist=[]; selectedPlantType="basic"; if(id){ const p=gardenData.plants.find(x=>x.id===id); document.getElementById('plant-title').value=p.title; selectedPlantType=p.type||"basic"; tempChecklist=JSON.parse(JSON.stringify(p.tasks||[])); } else { document.getElementById('plant-form').reset(); } renderPlantTypeSelector(); renderChecklistUI(); d.showModal(); }
-        function closePlantDialog() { document.getElementById('plant-dialog').close(); editingPlantId=null; }
-        document.getElementById('plant-form').addEventListener('submit', (e)=>{ e.preventDefault(); const title=document.getElementById('plant-title').value; const allDone=tempChecklist.length>0 && tempChecklist.every(t=>t.done); const prev=editingPlantId?gardenData.plants.find(p=>p.id===editingPlantId).growth:0; let next=prev; if(allDone && prev<2){ next++; gardenData.coins+=5; } if(editingPlantId){ const p=gardenData.plants.find(x=>x.id===editingPlantId); p.title=title; p.type=selectedPlantType; p.tasks=tempChecklist; p.growth=next; }else{ gardenData.plants.push({id:Date.now(), title, growth:next, type:selectedPlantType, tasks:tempChecklist}); } saveData(); renderPlants(); closePlantDialog(); });
-        
-        function renderChecklistUI() { const c=document.getElementById('dialog-checklist'); c.innerHTML=''; tempChecklist.forEach((t,i)=>{ const d=document.createElement('div'); d.className=`checklist-item ${t.done?'done':''}`; d.innerHTML=`<input type="checkbox" ${t.done?'checked':''} onchange="toggleTempTask(${i})"><span>${t.text}</span><button type="button" style="background:none;border:none;color:#f55;cursor:pointer;" onclick="removeTempTask(${i})">✕</button>`; c.appendChild(d); }); }
-        function addChecklistItem(){ const i=document.getElementById('new-task-input'); if(i.value.trim()){ tempChecklist.push({text:i.value, done:false}); i.value=''; renderChecklistUI(); } }
-        function toggleTempTask(i){ tempChecklist[i].done=!tempChecklist[i].done; renderChecklistUI(); }
-        function removeTempTask(i){ tempChecklist.splice(i,1); renderChecklistUI(); }
-        function handlePlantClick(id) { if(isDeleteMode) { gardenData.plants=gardenData.plants.filter(p=>p.id!==id); saveData(); renderPlants(); } else openPlantDialog(id); }
-        function renderPlantTypeSelector() { const c=document.getElementById('plant-type-selector'); c.innerHTML=''; for(const [k,v] of Object.entries(plantTypes)){ if(gardenData.unlockedPlants.includes(k)){ const d=document.createElement('div'); d.className=`shop-item unlocked ${selectedPlantType===k?'selected':''}`; d.innerHTML=`<div style="font-size:1.5rem; color:${v.color}">✿</div><div>${v.name}</div>`; d.onclick=()=>{selectedPlantType=k;renderPlantTypeSelector();}; c.appendChild(d); } } }
-
-        function openHabitDialog() { if(isDeleteMode)return; if(gardenData.habits.length>=MAX_FREE_ITEMS){document.getElementById('premium-dialog').showModal();return;} document.getElementById('habit-form').reset(); document.getElementById('habit-dialog').showModal(); }
-        document.getElementById('habit-form').addEventListener('submit', (e)=>{ e.preventDefault(); gardenData.habits.push({id:Date.now(), title:document.getElementById('habit-title').value, type:document.getElementById('habit-type').value, history:{}}); saveData(); renderHabits(); document.getElementById('habit-dialog').close(); });
-        function toggleHabit(id,d){ if(isDeleteMode)return; const h=gardenData.habits.find(x=>x.id==id); if(h){ if(h.history[d]){ delete h.history[d]; gardenData.coins=Math.max(0,gardenData.coins-1); } else { h.history[d]=true; gardenData.coins++; } saveData(); renderHabits(); } }
-        function deleteHabit(id){ gardenData.habits=gardenData.habits.filter(h=>h.id!==id); saveData(); renderHabits(); }
-
-        function openShopDialog() { const c=document.getElementById('shop-grid-container'); c.innerHTML=''; for(const [k,v] of Object.entries(plantTypes)){ if(k==='basic')continue; const u=gardenData.unlockedPlants.includes(k); const d=document.createElement('div'); d.className=`shop-item ${u?'unlocked':''}`; d.innerHTML=`<span class="shop-price">${v.price}🪙</span><span class="owned-badge">Owned</span><div style="font-size:2rem; color:${v.color}">✿</div><div>${v.name}</div>`; if(!u) d.onclick=()=>buyItem(k,v.price); c.appendChild(d); } document.getElementById('shop-dialog').showModal(); }
-        function buyItem(k,p){ if(gardenData.coins>=p){ gardenData.coins-=p; gardenData.unlockedPlants.push(k); saveData(); openShopDialog(); }else{alert("Need more coins!");} }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            initAuth(); initAdSense();
-            const c=document.getElementById('bg-particles-container'); for(let i=0;i<15;i++){ const e=document.createElement('div'); e.innerHTML=`<svg class="leaf-particle" viewBox="0 0 24 24"><path d="M17,8C8,10 5.9,16.17 3.82,21.34L5.71,22L6.66,19.7C8.5,15 13,12 19,10H17V8H17M21.9,9C17,7 15,3 13,3H11V5H13C15,5 17,7 17.76,8.3C14,7 11,4 9,2H7V4H9C11,4 13,6 13.4,7.7C11.5,6 9.5,5 7.5,5C5.5,5 3.5,6 1.5,8V10C3.5,8 5.5,7 7.5,7C9.5,7 11.5,8 13.1,9.3C11.5,10.3 9.8,11.5 8,13C4.5,15.7 1.8,19.4 2,22H4C3.8,19.6 6.4,16 9.6,13.5C11,12.3 12.5,11.3 14,10.6C14.8,12 15.5,13.5 16,15H18C17.5,13.3 16.7,11.6 15.7,10C20,11 22,14 22,14V12C22,12 20,10 21.9,9Z"/></svg>`; const s=e.firstChild; s.style.width=s.style.height=`${Math.random()*40+20}px`; s.style.left=`${Math.random()*100}%`; s.style.top=`${Math.random()*100}%`; c.appendChild(s); }
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
