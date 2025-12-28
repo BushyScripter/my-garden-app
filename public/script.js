@@ -74,37 +74,49 @@ function toggleAuthMode() {
 function updateAccountUI() {
     const accBtn = document.getElementById('account-btn');
     const premiumBtn = document.getElementById('premium-btn');
+    const isGuest = localStorage.getItem('isGuest') === 'true'; // Check the flag
 
-    if (!token) {
-        // GUEST STATE
-        accBtn.innerHTML = "👤 Login";
-        accBtn.className = "nav-btn account-btn";
-        premiumBtn.style.display = "none"; // Hide premium upsell for guests
-        document.getElementById('coin-display').style.opacity = "0"; // Hide coins
-    } else {
-        // LOGGED IN STATE
+    if (token) {
+        // --- LOGGED IN STATE ---
         document.getElementById('coin-display').style.opacity = "1";
-        
         if (isPremiumUser) {
-            // PREMIUM USER
             accBtn.innerHTML = "👑 Premium Member";
             accBtn.className = "nav-btn account-btn premium";
-            premiumBtn.style.display = "none"; // Hide upsell (already premium)
+            premiumBtn.style.display = "none";
         } else {
-            // FREE USER
             accBtn.innerHTML = "👤 Account";
             accBtn.className = "nav-btn account-btn logged-in";
-            premiumBtn.style.display = "block"; // Show upsell
+            premiumBtn.style.display = "block";
             premiumBtn.innerText = "👑 Go Premium";
         }
+    } else if (isGuest) {
+        // --- GUEST STATE (New!) ---
+        accBtn.innerHTML = "👤 Guest Mode";
+        accBtn.className = "nav-btn account-btn";
+        premiumBtn.style.display = "none";
+        document.getElementById('coin-display').style.opacity = "1"; // Guests get coins too!
+    } else {
+        // --- LOGGED OUT STATE ---
+        accBtn.innerHTML = "👤 Login";
+        accBtn.className = "nav-btn account-btn";
+        premiumBtn.style.display = "none";
+        document.getElementById('coin-display').style.opacity = "0";
     }
 }
-
 function handleAccountClick() {
+    // If Guest, ask if they want to exit guest mode
+    if (localStorage.getItem('isGuest') === 'true') {
+        if(confirm("Exit Guest Mode and return to Login? (Your guest data will be lost)")) {
+            logout();
+        }
+        return; 
+    }
+
+    // If Not Logged In, Show Login
     if (!token) {
         document.getElementById('auth-dialog').showModal();
     } else {
-        // If logged in, clicking account asks to logout
+        // If Logged In, Ask to Logout
         if(confirm("Log out of your account?")) {
             logout();
         }
