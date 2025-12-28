@@ -39,6 +39,10 @@ body, html {
     overflow: hidden; 
     color: var(--text-primary); 
     transition: background-color 0.5s ease; 
+    min-height: 100vh;
+    /* Add padding equal to the ad bar height + extra space */
+    padding-bottom: 120px !important; 
+    box-sizing: border-box;
 }
 
 /* --- Header & Navigation --- */
@@ -549,7 +553,28 @@ dialog::backdrop { background: rgba(0,0,0,0.9); backdrop-filter: blur(8px); }
         text-align: center;
     }
 }
+/* --- Landscape Mode Tweaks --- */
+/* Target screens that are "short" (like a phone turned sideways) */
+@media (max-height: 500px) and (orientation: landscape) {
+    
+    /* 1. Hide the Footer/Privacy Link to save space */
+    footer {
+        display: none !important;
+    }
 
+    /* 2. If you have a specific ID for the ad container, hide it too */
+    /* Note: If it's a Google Auto Ad, you might not be able to hide it via CSS easily, 
+       but if it's your own div, this works: */
+    .ad-container, #ad-bar { 
+        display: none !important; 
+    }
+
+    /* 3. Shrink the Welcome Text even more */
+    #home h1 {
+        font-size: 2rem !important;
+        margin-bottom: 10px;
+    }
+}
 /* Animations */
 @keyframes pulseRed { 0% { text-shadow: 0 0 5px var(--fire); transform: scale(1); } 50% { text-shadow: 0 0 15px var(--fire); transform: scale(1.2); } 100% { text-shadow: 0 0 5px var(--fire); transform: scale(1); } }
 @keyframes waterPlant { 0% { opacity: 1; transform: translateX(-50%) rotate(0deg); } 50% { transform: translateX(-50%) rotate(-30deg); } 100% { opacity: 0; transform: translateX(-50%) rotate(0deg); } }
