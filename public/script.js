@@ -18,9 +18,10 @@ function initAuth() {
     const storedToken = localStorage.getItem('garden_token');
     if(storedToken) {
         token = storedToken;
-        loadData(); // This will eventually update the UI
+        // FIX: Update the UI immediately so it says "Account" instantly
+        updateAccountUI(); 
+        loadData(); 
     } else {
-        // User is a guest. Don't show modal, just update UI to Guest state.
         updateAccountUI();
     }
 }
@@ -166,15 +167,21 @@ async function saveData() {
 
 async function loadData() {
     const res = await apiCall('sync', 'GET');
+    
+    // If the server explicitly says "Unauthorized" or "Token invalid"
+    if (res && res.error) {
+        logout(); // Force logout so they don't get stuck
+        return;
+    }
+
     if(res) { 
         gardenData = res; 
         isPremiumUser = res.isPremium;
-        updateAccountUI(); // Update buttons based on premium status
+        updateAccountUI(); 
         renderAll(); 
         updateCoinDisplay(); 
     }
 }
-
 // Payment Functions
 async function startCheckout() {
     const res = await apiCall('create-checkout-session', 'POST');
