@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
 // REPLACE THIS with your actual Stripe Secret Key (sk_test_...)
-const stripe = require('stripe')('pk_test_MrRzo8e8ELy1dFsSsV48dvWM00wRUgrNJ0');
+const stripe = require('stripe')('sk_test_51Gau3uJ7FqqjX2clEq3FNdUEQJPJaO75PgRaOu6kFY7lFq13LCTmRuiD0t6VI9GuJ1ZVB8xWV859s7ETFBB11nB700ffUkVhNL');
 
 const app = express();
 const PORT = process.env.PORT || 3000; // Use Render's port or 3000 locally
