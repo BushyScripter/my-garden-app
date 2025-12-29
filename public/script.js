@@ -405,47 +405,7 @@ function getPlantSVG(growth, type, potStyle) {
     }
     return `<svg viewBox="0 0 200 220" class="interactive-plant-svg">${potSVG}${plantSVG}</svg>`;
 }
-// --- MISSING PLANT SAVE LOGIC ---
-document.getElementById('plant-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const title = document.getElementById('plant-title').value;
-    
-    // Calculate Growth Stage based on inputs
-    let growth = 0;
-    if(tempPlantState.mode === 'checklist') {
-        const total = tempPlantState.checklist.length;
-        const done = tempPlantState.checklist.filter(t => t.done).length;
-        if(total > 0 && done === total) growth = 2; 
-        else if (done > 0) growth = 1;
-    } else {
-        const pct = tempPlantState.counterVal / tempPlantState.counterMax;
-        if(pct >= 1) growth = 2;
-        else if (pct > 0) growth = 1;
-    }
 
-    const newPlant = {
-        id: editingPlantId || Date.now(),
-        title: title,
-        type: tempPlantState.type,
-        pot: tempPlantState.pot,
-        taskMode: tempPlantState.mode,
-        checklist: tempPlantState.checklist,
-        counterMax: tempPlantState.counterMax,
-        counterVal: tempPlantState.counterVal,
-        growth: growth
-    };
-
-    if(editingPlantId) {
-        const idx = gardenData.plants.findIndex(p => p.id === editingPlantId);
-        gardenData.plants[idx] = newPlant;
-    } else {
-        gardenData.plants.push(newPlant);
-    }
-    
-    saveData();
-    renderPlants();
-    document.getElementById('plant-dialog').close();
-});
 // --- HABIT LOGIC --- //
 function openHabitDialog() {
     if(isDeleteMode) return;
