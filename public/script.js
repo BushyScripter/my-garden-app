@@ -608,6 +608,40 @@ async function startCheckout() {
     // API Call placeholder
     alert("Redirecting to Stripe...");
 }
+/* --- MISSING HELPER FUNCTIONS --- */
 
+function safeNavigate(pageId) {
+    if (!checkAuth()) return; // Stop if not logged in
+    showPage(pageId);
+}
+
+function handlePremiumClick() {
+    // Open the premium dialog
+    document.getElementById('premium-dialog').showModal();
+}
+
+function handleAccountClick() {
+    // If logged in, maybe show account details? For now, just open auth.
+    // If you want a logout, you can add that logic here.
+    if (token || localStorage.getItem('isGuest') === 'true') {
+        if(confirm("Log out?")) {
+            token = null;
+            localStorage.removeItem('garden_token');
+            localStorage.removeItem('isGuest');
+            location.reload();
+        }
+    } else {
+        document.getElementById('auth-dialog').showModal();
+    }
+}
+
+function closePlantDialog() {
+    document.getElementById('plant-dialog').close();
+}
+
+function safeAction(actionFunction) {
+    if (!checkAuth()) return;
+    actionFunction();
+}
 // Load it up!
 document.addEventListener('DOMContentLoaded', initAuth);
