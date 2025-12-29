@@ -49,18 +49,37 @@ let tempHabitState = { type: 'grape' };
 
 
 /* --- AUTHENTICATION --- */
+/* --- AUTHENTICATION & SAVING FIXES --- */
+
 function initAuth() {
     const storedToken = localStorage.getItem('garden_token');
+    // FIX: If no token is found, FORCE guest mode so saving works immediately
+    if (!storedToken && localStorage.getItem('isGuest') !== 'true') {
+        localStorage.setItem('isGuest', 'true');
+    }
+
     const isGuest = localStorage.getItem('isGuest') === 'true';
 
     if (storedToken) {
         token = storedToken;
-        // Simulate API load
         loadData(); 
     } else if (isGuest) {
         loadData();
     }
     updateAccountUI();
+}
+
+
+// Helper to refresh coin UI
+function updateCoinDisplay() {
+    const el = document.getElementById('coin-count');
+    if(el) {
+        el.innerText = gardenData.coins;
+        // Trigger little animation
+        el.parentElement.classList.remove('coin-anim');
+        void el.parentElement.offsetWidth; // trigger reflow
+        el.parentElement.classList.add('coin-anim');
+    }
 }
 
 function checkAuth() {
@@ -93,12 +112,22 @@ async function loadData() {
 }
 
 async function saveData() {
+    // FIX: Ensure we have a valid object before saving
+    if (!gardenData) return; 
+
+    // Visual Update
     updateCoinDisplay();
+
+    // Guest Save Logic
     if (localStorage.getItem('isGuest') === 'true') {
         localStorage.setItem('guestData', JSON.stringify(gardenData));
+        console.log("Saved to LocalStorage:", gardenData); // Debug log
+    } else if (token) {
+        // Server Save Logic (Placeholder)
+        // await fetch('/api/sync', { ... })
     }
-    // Server sync would go here
 }
+
 
 /* --- UI & NAVIGATION --- */
 function showPage(id) { 
