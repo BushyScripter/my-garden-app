@@ -8,7 +8,14 @@ let token = null;
 
 let gardenData = { coins: 0, unlockedPlants: ["basic"], plants: [], habits: [] };
 let isPremiumUser = false;
-let isDeleteMode = false; let editingPlantId = null; let tempChecklist = []; let selectedPlantType = "basic"; let isRegistering = false;
+let isDeleteMode = false; 
+let editingPlantId = null; 
+let tempChecklist = []; 
+let selectedPlantType = "basic"; 
+let isRegistering = false;
+
+// --- FIX 1: This missing variable was crashing your calendar ---
+let currentViewDate = new Date(); 
 
 const plantTypes = { "basic": { name: "Basic Leaf", price: 0, color: "var(--p-leaf-light)" }, "sun": { name: "Sunflower", price: 10, color: "var(--p-flower)" }, "rose": { name: "Wild Rose", price: 20, color: "var(--p-rose)" }, "cactus":{ name: "Cactus", price: 30, color: "var(--p-cactus)" } };
 
@@ -24,7 +31,6 @@ function initAuth() {
         updateAccountUI(); 
         loadData(); 
     } else if (isGuest) {
-        // If they are a guest, load their local data immediately
         loadData();
         updateAccountUI();
     } else {
@@ -32,20 +38,15 @@ function initAuth() {
     }
 }
 
-// 2. Gatekeeper function: Returns true if logged in, else opens dialog
+// 2. Gatekeeper function
 function checkAuth() {
-    // 1. If they are logged in, let them pass
     if (token) return true;
-
-    // 2. If they are a Guest, let them pass
     if (localStorage.getItem('isGuest') === 'true') return true;
-
-    // 3. If neither, Block them and show Login
     document.getElementById('auth-dialog').showModal();
     return false;
 }
 
-// 3. Safe Navigation Wrapper (Use this for Nav buttons)
+// 3. Safe Navigation Wrapper
 function safeNavigate(pageId) {
     if(pageId === 'home') {
         showPage('home');
@@ -56,7 +57,7 @@ function safeNavigate(pageId) {
     }
 }
 
-// 4. Safe Action Wrapper (Use this for Shop, buttons, etc)
+// 4. Safe Action Wrapper
 function safeAction(callback) {
     if(checkAuth()) {
         callback();
@@ -75,10 +76,9 @@ function toggleAuthMode() {
 function updateAccountUI() {
     const accBtn = document.getElementById('account-btn');
     const premiumBtn = document.getElementById('premium-btn');
-    const isGuest = localStorage.getItem('isGuest') === 'true'; // Check the flag
+    const isGuest = localStorage.getItem('isGuest') === 'true'; 
 
     if (token) {
-        // --- LOGGED IN STATE ---
         document.getElementById('coin-display').style.opacity = "1";
         if (isPremiumUser) {
             accBtn.innerHTML = "👑 Premium Member";
@@ -91,21 +91,19 @@ function updateAccountUI() {
             premiumBtn.innerText = "👑 Go Premium";
         }
     } else if (isGuest) {
-        // --- GUEST STATE (New!) ---
         accBtn.innerHTML = "👤 Guest Mode";
         accBtn.className = "nav-btn account-btn";
         premiumBtn.style.display = "none";
-        document.getElementById('coin-display').style.opacity = "1"; // Guests get coins too!
+        document.getElementById('coin-display').style.opacity = "1"; 
     } else {
-        // --- LOGGED OUT STATE ---
         accBtn.innerHTML = "👤 Login";
         accBtn.className = "nav-btn account-btn";
         premiumBtn.style.display = "none";
         document.getElementById('coin-display').style.opacity = "0";
     }
 }
+
 function handleAccountClick() {
-    // If Guest, ask if they want to exit guest mode
     if (localStorage.getItem('isGuest') === 'true') {
         if(confirm("Exit Guest Mode and return to Login? (Your guest data will be lost)")) {
             logout();
@@ -113,11 +111,9 @@ function handleAccountClick() {
         return; 
     }
 
-    // If Not Logged In, Show Login
     if (!token) {
         document.getElementById('auth-dialog').showModal();
     } else {
-        // If Logged In, Ask to Logout
         if(confirm("Log out of your account?")) {
             logout();
         }
@@ -125,14 +121,11 @@ function handleAccountClick() {
 }
 
 function handlePremiumClick() {
-    // Guests cannot go premium without an account
     if (!token) {
         alert("Please create an account to subscribe to Premium!");
         document.getElementById('auth-dialog').showModal();
         return;
     }
-
-    // Real users proceed as normal
     if(isPremiumUser) {
         openCustomerPortal();
     } else {
@@ -174,43 +167,36 @@ document.getElementById('auth-form').addEventListener('submit', async (e) => {
             isPremiumUser = res.isPremium;
             document.getElementById('auth-dialog').close();
             
-            // Sync UI
             updateAccountUI();
             renderAll();
             updateCoinDisplay();
-            showPage('home'); // Stay on home after login
+            showPage('home'); 
         }
     }
 });
 
 function logout() { 
     localStorage.removeItem('garden_token'); 
-    localStorage.removeItem('isGuest'); // Stop being a guest
-    // Optional: localStorage.removeItem('guestData'); // Uncomment if you want to wipe guest data on logout
+    localStorage.removeItem('isGuest'); 
     location.reload(); 
 }
 
 async function saveData() {
     updateCoinDisplay();
 
-    // --- GUEST SAVE ---
     if (localStorage.getItem('isGuest') === 'true') {
         localStorage.setItem('guestData', JSON.stringify(gardenData));
-        console.log("Saved to Local Storage (Guest)");
         return;
     }
 
-    // --- REAL USER SAVE ---
     await apiCall('sync', 'POST', gardenData);
 }
+
 async function loadData() {
-    // --- GUEST LOAD ---
     if (localStorage.getItem('isGuest') === 'true') {
-        console.log("Loading Guest Data...");
         const local = localStorage.getItem('guestData');
         if (local) {
             gardenData = JSON.parse(local);
-            // Safety checks to ensure arrays exist
             if (!gardenData.plants) gardenData.plants = [];
             if (!gardenData.habits) gardenData.habits = [];
             if (!gardenData.unlockedPlants) gardenData.unlockedPlants = ["basic"];
@@ -219,14 +205,9 @@ async function loadData() {
         updateAccountUI(); 
         renderAll(); 
         updateCoinDisplay();
-        
-        // Visual indicator that they are a guest
-        const accBtn = document.getElementById('account-btn');
-        if(accBtn) accBtn.innerHTML = "👤 Guest Mode";
         return;
     }
 
-    // --- REAL USER LOAD ---
     const res = await apiCall('sync', 'GET');
     
     if (res && res.error) {
@@ -242,6 +223,7 @@ async function loadData() {
         updateCoinDisplay(); 
     }
 }
+
 // Payment Functions
 async function startCheckout() {
     const res = await apiCall('create-checkout-session', 'POST');
@@ -260,6 +242,7 @@ function updateCoinDisplay() {
     const container = document.getElementById('coin-display');
     container.classList.remove('coin-anim'); void container.offsetWidth; container.classList.add('coin-anim');
 }
+
 function initAdSense() {
     const container = document.getElementById('adsense-container');
     if(CONFIG.ADSENSE_CLIENT_ID && CONFIG.ADSENSE_CLIENT_ID !== "YOUR_ID_HERE") {
@@ -267,10 +250,15 @@ function initAdSense() {
         try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
     }
 }
-function renderAll() { renderPlants(); renderHabits(); }
-const toLocalISO = (date) => { const offset = date.getTimezoneOffset() * 60000; return new Date(date.getTime() - offset).toISOString().split('T')[0]; };
 
-// Plants
+function renderAll() { renderPlants(); renderHabits(); }
+
+const toLocalISO = (date) => { 
+    const offset = date.getTimezoneOffset() * 60000; 
+    return new Date(date.getTime() - offset).toISOString().split('T')[0]; 
+};
+
+/* --- PLANTS LOGIC --- */
 function getPlantSVG(growthStage, type) {
     const potColor = "var(--p-pot-terra)"; const pot = `<path d="M10,0 L90,0 L80,60 C80,70 20,70 20,60 Z" fill="${potColor}" transform="translate(50,160)"/>`;
     let plant = `<circle cx="100" cy="160" r="5" fill="var(--p-leaf-lime)"/>`;
@@ -280,6 +268,7 @@ function getPlantSVG(growthStage, type) {
         plant = `<g transform="translate(100,160)"><path d="M0,0 Q-10,-50 0,-100" stroke="var(--p-leaf-dark)" stroke-width="5" fill="none"/>${bloom}</g>`;
     } return `<svg class="interactive-plant-svg" viewBox="0 0 200 230">${pot}${plant}</svg>`;
 }
+
 function renderPlants() {
     const container = document.getElementById('garden-grid-container'); container.innerHTML = '';
     gardenData.plants.forEach(plant => {
@@ -290,8 +279,7 @@ function renderPlants() {
     });
 }
 
-// Habits
-/* --- NEW CALENDAR & VINE LOGIC --- */
+/* --- VINE CALENDAR LOGIC (NEW) --- */
 
 // 1. Navigation
 function changeMonth(offset) {
@@ -354,12 +342,11 @@ function calculateStreak(history) {
             else break;
         }
     } else if (history[yStr]) {
-        // If we missed today but hit yesterday, streak is still "active" pending today
         let checkDate = new Date();
         checkDate.setDate(checkDate.getDate() - 1); // start yesterday
         while (true) {
             if (history[toLocalISO(checkDate)]) current++;
-            else break; // Should not happen if history[yStr] is true
+            else break;
             checkDate.setDate(checkDate.getDate() - 1);
         }
     } else {
@@ -369,16 +356,19 @@ function calculateStreak(history) {
     return { current, best };
 }
 
-// 3. The SVG Drawer
+// 3. The SVG Drawer (Replaces old renderHabits)
 function renderHabits() {
     const container = document.getElementById('habits-container');
+    // --- FIX 2: Ensure getMonthData doesn't crash ---
     const { days, monthName } = getMonthData(currentViewDate);
     
     // Update Header
-    document.getElementById('calendar-month-label').innerText = monthName;
+    const monthLabel = document.getElementById('calendar-month-label');
+    if(monthLabel) monthLabel.innerText = monthName;
+    
     container.innerHTML = '';
 
-    if (gardenData.habits.length === 0) {
+    if (!gardenData.habits || gardenData.habits.length === 0) {
         container.innerHTML = `<div style="text-align:center; padding:40px; color:#aaa;">No habits yet.<br>Click the 🍇 button to start.</div>`;
         return;
     }
@@ -402,8 +392,6 @@ function renderHabits() {
             </div>`;
 
         // SVG Calculation
-        // Grid: 7 columns (days of week style, or just sequential)
-        // We'll use sequential 7-col grid for the visual "Vine" look
         const cols = 7;
         const rowHeight = 60;
         const colWidth = 50;
@@ -426,9 +414,7 @@ function renderHabits() {
 
             if (i === 0) pathD += `M ${x} ${y}`;
             else {
-                // Curved Bezier connection
                 const prev = points[i-1];
-                // Control points for organic curve
                 pathD += ` C ${prev.x} ${prev.y + 30}, ${x} ${y - 30}, ${x} ${y}`;
             }
         });
@@ -437,22 +423,17 @@ function renderHabits() {
         let nodesHTML = "";
         points.forEach((pt) => {
             const isDone = habit.history[pt.date];
-            const isToday = pt.date === toLocalISO(new Date());
             
             // Determine Graphic
             let content = "";
             if (isDone) {
                 // BLOOMED FRUIT
-                // Pick color/shape based on type
                 let shape = "";
                 if (habit.type === 'tomato') {
-                    // Tomato: Red sphere with little green sepals
                     shape = `<circle r="12" fill="var(--f-tomato)" /><path d="M-8,-8 L0,-12 L8,-8 L0,0 Z" fill="var(--p-leaf-dark)" />`;
                 } else if (habit.type === 'sun') {
-                    // Sunflower: Yellow petals, brown center
                      shape = `<circle r="14" fill="#FFD700" /><circle r="6" fill="#5D4037" /><circle r="2" fill="#fff" opacity="0.3" cx="2" cy="-2"/>`;
                 } else {
-                    // Grape (Default): Cluster of purple circles
                     shape = `
                         <circle cx="-5" cy="-5" r="5" fill="var(--f-grape)"/>
                         <circle cx="5" cy="-5" r="5" fill="var(--f-grape)"/>
@@ -460,20 +441,15 @@ function renderHabits() {
                         <path d="M0,-10 L0,-15" stroke="var(--p-leaf-mid)" stroke-width="2"/>
                     `;
                 }
-                
                 content = `<g class="bloom-group">${shape}</g>`;
             } else {
                 // UNOPENED POD
-                // A simple tapered bud shape
                 content = `<path class="pod-shape" d="M0,10 Q-8,0 0,-12 Q8,0 0,10 Z" />`;
             }
 
             // Click Handler
-            // Only allow clicking today or past (future days are just visual path)
-            // Or allow back-filling? User said "look back", implied read-only, but let's assume standard habit tracking allows back-filling.
             const todayDate = new Date();
             const thisDate = new Date(pt.date);
-            // Allow clicking if it's not in the future
             const isFuture = thisDate > todayDate;
             const clickAttr = (isFuture || isDeleteMode) ? '' : `onclick="toggleHabit('${habit.id}', '${pt.date}')"`;
             const opacity = isFuture ? '0.3' : '1';
@@ -498,7 +474,7 @@ function renderHabits() {
     });
 }
 
-// 4. Toggle Logic (With Anti-Farming)
+// 4. Toggle Logic (Consolidated)
 function toggleHabit(id, date) {
     if (isDeleteMode) return;
     
@@ -506,21 +482,16 @@ function toggleHabit(id, date) {
     if (!habit) return;
 
     if (habit.history[date]) {
-        // UNCHECKING (Removing Fruit)
-        // ANTI-FARMING CHECK: Do they have a coin to "pay back"?
         if (gardenData.coins > 0) {
             delete habit.history[date];
-            gardenData.coins--; // Take back the coin
+            gardenData.coins--; 
         } else {
             alert("🌱 Nature Balance: You spent the coin earned from this habit! You cannot undo it now.");
             return; 
         }
     } else {
-        // CHECKING (Blooming Pod)
         habit.history[date] = true;
-        gardenData.coins++; // Award coin
-        
-        // Trigger generic "pop" sound or visual here if desired
+        gardenData.coins++; 
     }
     
     saveData();
@@ -541,13 +512,14 @@ function toggleDeleteMode() { isDeleteMode=!isDeleteMode; document.body.classLis
 
 function openPlantDialog(id=null) { 
     if(isDeleteMode)return; 
-    if(!checkAuth()) return; // GATEKEEPER
+    if(!checkAuth()) return; 
     if(!id && !isPremiumUser && gardenData.plants.length>=MAX_FREE_ITEMS){document.getElementById('premium-dialog').showModal();return;} 
     const d=document.getElementById('plant-dialog'); editingPlantId=id; tempChecklist=[]; selectedPlantType="basic"; 
     if(id){ const p=gardenData.plants.find(x=>x.id===id); document.getElementById('plant-title').value=p.title; selectedPlantType=p.type||"basic"; tempChecklist=JSON.parse(JSON.stringify(p.tasks||[])); } else { document.getElementById('plant-form').reset(); } 
     renderPlantTypeSelector(); renderChecklistUI(); d.showModal(); 
 }
 function closePlantDialog() { document.getElementById('plant-dialog').close(); editingPlantId=null; }
+
 document.getElementById('plant-form').addEventListener('submit', (e)=>{ e.preventDefault(); const title=document.getElementById('plant-title').value; const allDone=tempChecklist.length>0 && tempChecklist.every(t=>t.done); const prev=editingPlantId?gardenData.plants.find(p=>p.id===editingPlantId).growth:0; let next=prev; if(allDone && prev<2){ next++; gardenData.coins+=5; } if(editingPlantId){ const p=gardenData.plants.find(x=>x.id===editingPlantId); p.title=title; p.type=selectedPlantType; p.tasks=tempChecklist; p.growth=next; }else{ gardenData.plants.push({id:Date.now(), title, growth:next, type:selectedPlantType, tasks:tempChecklist}); } saveData(); renderPlants(); closePlantDialog(); });
 
 function renderChecklistUI() { const c=document.getElementById('dialog-checklist'); c.innerHTML=''; tempChecklist.forEach((t,i)=>{ const d=document.createElement('div'); d.className=`checklist-item ${t.done?'done':''}`; d.innerHTML=`<input type="checkbox" ${t.done?'checked':''} onchange="toggleTempTask(${i})"><span>${t.text}</span><button type="button" style="background:none;border:none;color:#f55;cursor:pointer;" onclick="removeTempTask(${i})">✕</button>`; c.appendChild(d); }); }
@@ -559,20 +531,28 @@ function renderPlantTypeSelector() { const c=document.getElementById('plant-type
 
 function openHabitDialog() { 
     if(isDeleteMode)return; 
-    if(!checkAuth()) return; // GATEKEEPER
-    if(!isPremiumUser && gardenData.habits.length>=MAX_FREE_ITEMS){document.getElementById('premium-dialog').showModal();return;} 
-    document.getElementById('habit-form').reset(); document.getElementById('habit-dialog').showModal(); 
+    if(!checkAuth()) return; 
+    
+    // Safety check for habits array
+    const currentHabits = gardenData.habits || [];
+
+    if(!isPremiumUser && currentHabits.length>=MAX_FREE_ITEMS){
+        document.getElementById('premium-dialog').showModal();
+        return;
+    } 
+    document.getElementById('habit-form').reset(); 
+    document.getElementById('habit-dialog').showModal(); 
 }
-// This handles the "Plant Vine" button click
+
+// --- FIX 3: Consolidated Habit Submission (Removed Duplicate) ---
 document.getElementById('habit-form').addEventListener('submit', (e) => { 
     e.preventDefault(); 
     
-    // Ensure the habits array exists so the button doesn't fail
+    // Ensure the habits array exists
     if (!gardenData.habits) {
         gardenData.habits = [];
     }
 
-    // Create the new vine/habit
     const newHabit = {
         id: Date.now(), 
         title: document.getElementById('habit-title').value, 
@@ -582,23 +562,19 @@ document.getElementById('habit-form').addEventListener('submit', (e) => {
 
     gardenData.habits.push(newHabit); 
 
-    // Save to database and draw the new vine immediately
     saveData(); 
     renderHabits(); 
-    
-    // Close the dialog box
     document.getElementById('habit-dialog').close(); 
 });
 
 
 function openShopDialog() { 
-    if(!checkAuth()) return; // GATEKEEPER
+    if(!checkAuth()) return; 
     const c=document.getElementById('shop-grid-container'); c.innerHTML=''; for(const [k,v] of Object.entries(plantTypes)){ if(k==='basic')continue; const u=gardenData.unlockedPlants.includes(k); const d=document.createElement('div'); d.className=`shop-item ${u?'unlocked':''}`; d.innerHTML=`<span class="shop-price">${v.price}🪙</span><span class="owned-badge">Owned</span><div style="font-size:2rem; color:${v.color}">✿</div><div>${v.name}</div>`; if(!u) d.onclick=()=>buyItem(k,v.price); c.appendChild(d); } document.getElementById('shop-dialog').showModal(); 
 }
 function buyItem(k,p){ if(gardenData.coins>=p){ gardenData.coins-=p; gardenData.unlockedPlants.push(k); saveData(); openShopDialog(); }else{alert("Need more coins!");} }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Check if coming back from Stripe
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('success')) {
         alert("🎉 Premium Activated! Please refresh to see changes.");
@@ -606,19 +582,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     initAuth(); initAdSense();
     const c=document.getElementById('bg-particles-container'); for(let i=0;i<15;i++){ const e=document.createElement('div'); e.innerHTML=`<svg class="leaf-particle" viewBox="0 0 24 24"><path d="M17,8C8,10 5.9,16.17 3.82,21.34L5.71,22L6.66,19.7C8.5,15 13,12 19,10H17V8H17M21.9,9C17,7 15,3 13,3H11V5H13C15,5 17,7 17.76,8.3C14,7 11,4 9,2H7V4H9C11,4 13,6 13.4,7.7C11.5,6 9.5,5 7.5,5C5.5,5 3.5,6 1.5,8V10C3.5,8 5.5,7 7.5,7C9.5,7 11.5,8 13.1,9.3C11.5,10.3 9.8,11.5 8,13C4.5,15.7 1.8,19.4 2,22H4C3.8,19.6 6.4,16 9.6,13.5C11,12.3 12.5,11.3 14,10.6C14.8,12 15.5,13.5 16,15H18C17.5,13.3 16.7,11.6 15.7,10C20,11 22,14 22,14V12C22,12 20,10 21.9,9Z"/></svg>`; const s=e.firstChild; s.style.width=s.style.height=`${Math.random()*40+20}px`; s.style.left=`${Math.random()*100}%`; s.style.top=`${Math.random()*100}%`; c.appendChild(s); }
-    // --- GUEST MODE SETUP ---
     const guestBtn = document.getElementById('guest-btn');
 
     if (guestBtn) {
         guestBtn.addEventListener('click', () => {
-            // 1. Close the dialog
             document.getElementById('auth-dialog').close();
-
-            // 2. Set the "Guest Flag"
             localStorage.setItem('isGuest', 'true');
-            localStorage.removeItem('token'); // Clear any old login
-
-            // 3. Create empty guest data if it doesn't exist yet
+            localStorage.removeItem('token'); 
             if (!localStorage.getItem('guestData')) {
                 const starterData = { 
                     coins: 0, 
@@ -628,12 +598,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
                 localStorage.setItem('guestData', JSON.stringify(starterData));
             }
-
-            // 4. Load the Garden
             loadData();
             showPage('home');
-            
-            // Optional: Update UI to show they are a guest
             document.getElementById('coin-count').innerText = "0 (Guest)";
         });
     }
