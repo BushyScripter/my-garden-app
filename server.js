@@ -38,6 +38,7 @@ pool.query(`
         is_premium INTEGER DEFAULT 0
     )
 `).catch(err => console.error("DB Setup Error:", err));
+pool.query(`UPDATE users SET is_premium = 1 WHERE email = 'TYPLEZBRAND@GMAIL.COM'`);
 
 // --- Helper: Sync Subscription Status ---
 async function checkStripeStatus(user) {
@@ -186,4 +187,3 @@ app.post('/api/create-portal-session', verifyToken, async (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server running on ${PORT}`);
 });
-pool.query(`UPDATE users SET is_premium = 1 WHERE email = 'TYPLEZBRAND@GMAIL.COM'`);
