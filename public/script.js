@@ -19,13 +19,13 @@ const PLANT_TYPES = {
 };
 const VINE_TYPES = {
     "grape":     { name: "Grapes",     price: 0,  icon: "🍇", color: "#9C27B0" },
-    "tomato":    { name: "Tomatoes",   price: 25, isPremium: false, icon: "🍅", color: "#D50000" },
+    "tomato":    { name: "Tomatoes",   price: 25, icon: "🍅", color: "#D50000" },
     "blueberry": { name: "Blueberry",  price: 40, isPremium: true, icon: "🫐", color: "#3F51B5" },
-    "strawberry":{ name: "Strawberry", price: 30, isPremium: false, icon: "🍓", color: "#FF1744" }
+    "strawberry":{ name: "Strawberry", price: 30, icon: "🍓", color: "#FF1744" }
 };
 const POT_STYLES = {
-    "terra":   { name: "Terra Cotta", price: 0,  isPremium: false, icon: "🏺", color: "#E65100" },
-    "classic": { name: "Classic Blue",price: 15, isPremium: false, icon: "🔵", color: "#1E88E5" },
+    "terra":   { name: "Terra Cotta", price: 0,  icon: "🏺", color: "#E65100" },
+    "classic": { name: "Classic Blue",price: 15, icon: "🔵", color: "#1E88E5" },
     "modern":  { name: "Modern Wht",  price: 25, isPremium: true, icon: "⚪", color: "#F5F5F5" },
     "gold":    { name: "Gold Pot",    price: 100,isPremium: true, icon: "👑", color: "#FFD700" }
 };
@@ -332,7 +332,7 @@ function renderHabits() {
             
             const isDone = h.history[day];
             const color = VINE_TYPES[h.type]?.color || '#9C27B0';
-            const visual = isDone ? `<g class="bloom-group"><g class="particle-burst"><circle cx="0" cy="0" r="2" fill="${color}"/><circle cx="0" cy="0" r="2" fill="gold"/></g><circle r="12" fill="${color}" stroke="white" stroke-width="1"/></g>` : `<path d="M0,10 Q-6,0 0,-10 Q6,0 0,10 Z" fill="#2E7D32" stroke="#1B5E20"/>`;
+            const visual = isDone ? `<g class="bloom-group"><circle r="12" fill="${color}" stroke="white" stroke-width="1"/></g>` : `<path d="M0,10 Q-6,0 0,-10 Q6,0 0,10 Z" fill="#2E7D32" stroke="#1B5E20"/>`;
             const opacity = (new Date(day) > new Date()) ? 0.3 : 1;
             const click = (new Date(day) > new Date() || isDeleteMode) ? '' : `onclick="toggleHabit('${h.id}','${day}')"`;
             

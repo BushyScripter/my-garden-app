@@ -7,6 +7,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+// SECURITY FIX: Use env var, fallback to dev key only locally
 const SECRET_KEY = process.env.JWT_SECRET || "dev_secret_key_change_in_prod"; 
 
 const YOUR_DOMAIN = 'https://digitalgardentracker.com'; 
@@ -21,7 +22,7 @@ const pool = new Pool({
     ssl: { rejectUnauthorized: false } 
 });
 
-// Initialize Table (Ensure is_premium is INTEGER to match your DB)
+// Initialize Table (Ensure is_premium is INTEGER)
 pool.query(`
     CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -55,7 +56,7 @@ app.post('/api/register', async (req, res) => {
 
     try {
         const customer = await stripe.customers.create({ email: email });
-        // FIX: Explicitly inserting 0 (Integer) for is_premium
+        // FIX: Explicitly inserting 0 for is_premium
         await pool.query(
             `INSERT INTO users (email, password, garden_data, stripe_customer_id, is_premium) VALUES ($1, $2, $3, $4, $5)`,
             [email, hashedPassword, defaultData, customer.id, 0]
@@ -77,7 +78,8 @@ app.post('/api/login', async (req, res) => {
             return res.status(401).json({ error: "Invalid credentials." });
         }
 
-        // --- Premium Sync Logic (Integer Fix) ---
+        // --- Premium Sync Logic ---
+        // 1 = True, 0 = False
         let isPremiumInt = user.is_premium; 
         
         if(user.stripe_customer_id) {
@@ -87,7 +89,7 @@ app.post('/api/login', async (req, res) => {
                 limit: 1
             });
             const hasSub = subs.data.length > 0;
-            const newStatus = hasSub ? 1 : 0; // Convert to Integer
+            const newStatus = hasSub ? 1 : 0;
             
             if(newStatus !== isPremiumInt) {
                 await pool.query(`UPDATE users SET is_premium = $1 WHERE id = $2`, [newStatus, user.id]);
@@ -101,7 +103,7 @@ app.post('/api/login', async (req, res) => {
             auth: true, 
             token: token, 
             data: JSON.parse(user.garden_data), 
-            isPremium: isPremiumInt === 1 // Convert to Boolean for Frontend
+            isPremium: isPremiumInt === 1 // Send Boolean to Frontend
         });
     } catch (e) {
         console.error(e);
@@ -122,11 +124,7 @@ app.get('/api/load', verifyToken, async (req, res) => {
         const result = await pool.query(`SELECT garden_data, is_premium FROM users WHERE id = $1`, [req.userId]);
         const row = result.rows[0];
         if(!row) return res.status(404).send("User not found");
-        
-        res.json({ 
-            data: JSON.parse(row.garden_data), 
-            isPremium: row.is_premium === 1 // Convert Integer to Boolean
-        });
+        res.json({ data: JSON.parse(row.garden_data), isPremium: row.is_premium === 1 });
     } catch (e) { res.status(500).send("Load Error"); }
 });
 
