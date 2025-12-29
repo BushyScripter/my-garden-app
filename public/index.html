@@ -69,9 +69,16 @@
                         <button class="tool-btn" onclick="openHabitDialog()" title="New Habit">🍇</button>
                         <button class="tool-btn" id="delete-mode-btn-2" onclick="toggleDeleteMode()" title="Toggle Remove Tool">🧤</button>
                     </div>
+
+                    <div class="calendar-controls">
+                        <button class="nav-arrow-btn" onclick="changeMonth(-1)">◀</button>
+                        <h2 id="calendar-month-label">December 2025</h2>
+                        <button class="nav-arrow-btn" onclick="changeMonth(1)">▶</button>
+                    </div>
+
                     <div class="habits-container" id="habits-container"></div>
                 </div>
-            </section>
+            </section>            
         </main>
     </div>
 

@@ -5,6 +5,7 @@ const CONFIG = {
 
 const MAX_FREE_ITEMS = 3;
 let token = null; 
+
 let gardenData = { coins: 0, unlockedPlants: ["basic"], plants: [], habits: [] };
 let isPremiumUser = false;
 let isDeleteMode = false; let editingPlantId = null; let tempChecklist = []; let selectedPlantType = "basic"; let isRegistering = false;
@@ -290,20 +291,248 @@ function renderPlants() {
 }
 
 // Habits
-function getHabitStats(history) {
-    let curr = 0; for(let i=0; i<365; i++) { const d=new Date(); d.setDate(new Date().getDate()-i); const k=toLocalISO(d); if(i===0 && !history[k]) continue; if(history[k]) curr++; else break; }
-    let max=0; let t=1; const keys=Object.keys(history).sort(); if(keys.length>0) { max=1; for(let i=1;i<keys.length;i++){ if((new Date(keys[i])-new Date(keys[i-1]))/(86400000)===1) t++; else t=1; if(t>max) max=t; }}
-    return { current: curr, max: max, total: keys.length };
+/* --- NEW CALENDAR & VINE LOGIC --- */
+
+// 1. Navigation
+function changeMonth(offset) {
+    currentViewDate.setMonth(currentViewDate.getMonth() + offset);
+    renderHabits();
 }
+
+function getMonthData(date) {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const monthName = date.toLocaleDateString('default', { month: 'long', year: 'numeric' });
+    
+    // Generate YYYY-MM-DD strings for every day in the month
+    const days = [];
+    for (let i = 1; i <= daysInMonth; i++) {
+        // Handle timezone offset to ensure we get local YYYY-MM-DD
+        const d = new Date(year, month, i);
+        days.push(toLocalISO(d));
+    }
+    return { days, monthName };
+}
+
+// 2. High Score & Streak Calculation
+function calculateStreak(history) {
+    // Sort dates
+    const dates = Object.keys(history).sort();
+    if (dates.length === 0) return { current: 0, best: 0 };
+
+    let current = 0;
+    let best = 0;
+    let temp = 0;
+    
+    // Calculate Best
+    for (let i = 0; i < dates.length; i++) {
+        if (i > 0) {
+            const prev = new Date(dates[i-1]);
+            const curr = new Date(dates[i]);
+            const diff = (curr - prev) / (1000 * 60 * 60 * 24);
+            if (diff === 1) temp++;
+            else temp = 1;
+        } else {
+            temp = 1;
+        }
+        if (temp > best) best = temp;
+    }
+
+    // Calculate Current (working backwards from today)
+    const today = toLocalISO(new Date());
+    const yesterday = new Date(); 
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yStr = toLocalISO(yesterday);
+
+    if (history[today]) {
+        current = 1;
+        let checkDate = new Date();
+        while (true) {
+            checkDate.setDate(checkDate.getDate() - 1);
+            if (history[toLocalISO(checkDate)]) current++;
+            else break;
+        }
+    } else if (history[yStr]) {
+        // If we missed today but hit yesterday, streak is still "active" pending today
+        let checkDate = new Date();
+        checkDate.setDate(checkDate.getDate() - 1); // start yesterday
+        while (true) {
+            if (history[toLocalISO(checkDate)]) current++;
+            else break; // Should not happen if history[yStr] is true
+            checkDate.setDate(checkDate.getDate() - 1);
+        }
+    } else {
+        current = 0;
+    }
+
+    return { current, best };
+}
+
+// 3. The SVG Drawer
 function renderHabits() {
-    const container = document.getElementById('habits-container'); container.innerHTML = ''; const dates=[]; for(let i=6; i>=0; i--){ const d=new Date(); d.setDate(new Date().getDate()-i); dates.push(toLocalISO(d)); }
+    const container = document.getElementById('habits-container');
+    const { days, monthName } = getMonthData(currentViewDate);
+    
+    // Update Header
+    document.getElementById('calendar-month-label').innerText = monthName;
+    container.innerHTML = '';
+
+    if (gardenData.habits.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:40px; color:#aaa;">No habits yet.<br>Click the 🍇 button to start.</div>`;
+        return;
+    }
+
     gardenData.habits.forEach(habit => {
-        const stats = getHabitStats(habit.history); const row = document.createElement('div'); row.className = 'habit-row'; if(isDeleteMode) row.onclick = () => deleteHabit(habit.id);
-        let svg = `<path d="M0,70 Q100,20 200,70 T400,70 T600,70 T800,70" fill="none" stroke="#5D4037" stroke-width="4"/>`;
-        dates.forEach((d, i) => { const done=habit.history[d]; const x=50+(i*110); const y=i%2===0?80:60; svg+=`<g class="fruit-group" onclick="toggleHabit('${habit.id}', '${d}')"><line x1="${x}" y1="70" x2="${x}" y2="${y}" stroke="#5D4037" stroke-width="2"/><circle cx="${x}" cy="${y}" r="14" fill="${habit.type==='tomato'?'var(--f-tomato)':'var(--f-grape)'}" class="fruit-circle ${done?'fruit-collected':'fruit-uncollected'}" /><text x="${x}" y="${y+30}" class="day-label">${d.slice(8,10)}</text></g>`; });
-        row.innerHTML = `<div class="habit-info"><h3 class="habit-title">${habit.title}</h3><div class="habit-stats"><div class="stat-item"><span class="${stats.current>0?'fire-active':''}">🔥</span> Streak: <span class="stat-val">${stats.current}</span></div><div class="stat-item"><span>🏆</span> Best: <span class="stat-val">${stats.max}</span></div><div class="stat-item"><span>📅</span> Total: <span class="stat-val">${stats.total}</span></div></div></div><div class="vine-container"><svg class="vine-svg" viewBox="0 0 800 140" preserveAspectRatio="xMidYMid meet">${svg}</svg></div>`;
-        container.appendChild(row);
+        const stats = calculateStreak(habit.history);
+        
+        // Card Setup
+        const card = document.createElement('div');
+        card.className = 'habit-calendar-card';
+        if (isDeleteMode) card.onclick = () => deleteHabit(habit.id);
+
+        // Header (Title + Score)
+        const header = `
+            <div class="habit-header">
+                <h3>${habit.title}</h3>
+                <div style="display:flex; gap:10px;">
+                    <span class="habit-streak-badge">🔥 ${stats.current}</span>
+                    <span class="habit-streak-badge" style="background:rgba(255,255,255,0.1)">🏆 Best: ${stats.best}</span>
+                </div>
+            </div>`;
+
+        // SVG Calculation
+        // Grid: 7 columns (days of week style, or just sequential)
+        // We'll use sequential 7-col grid for the visual "Vine" look
+        const cols = 7;
+        const rowHeight = 60;
+        const colWidth = 50;
+        const svgHeight = Math.ceil(days.length / cols) * rowHeight + 20;
+        
+        // Generate Vine Path
+        let pathD = "";
+        const points = [];
+
+        days.forEach((day, i) => {
+            const row = Math.floor(i / cols);
+            const col = i % cols;
+            
+            // Snake Logic: Even rows L->R, Odd rows R->L
+            const isEvenRow = row % 2 === 0;
+            const x = isEvenRow ? (col * colWidth) + 30 : ((cols - 1 - col) * colWidth) + 30;
+            const y = (row * rowHeight) + 30;
+            
+            points.push({x, y, date: day});
+
+            if (i === 0) pathD += `M ${x} ${y}`;
+            else {
+                // Curved Bezier connection
+                const prev = points[i-1];
+                // Control points for organic curve
+                pathD += ` C ${prev.x} ${prev.y + 30}, ${x} ${y - 30}, ${x} ${y}`;
+            }
+        });
+
+        // Generate Nodes (Pods/Fruits)
+        let nodesHTML = "";
+        points.forEach((pt) => {
+            const isDone = habit.history[pt.date];
+            const isToday = pt.date === toLocalISO(new Date());
+            
+            // Determine Graphic
+            let content = "";
+            if (isDone) {
+                // BLOOMED FRUIT
+                // Pick color/shape based on type
+                let shape = "";
+                if (habit.type === 'tomato') {
+                    // Tomato: Red sphere with little green sepals
+                    shape = `<circle r="12" fill="var(--f-tomato)" /><path d="M-8,-8 L0,-12 L8,-8 L0,0 Z" fill="var(--p-leaf-dark)" />`;
+                } else if (habit.type === 'sun') {
+                    // Sunflower: Yellow petals, brown center
+                     shape = `<circle r="14" fill="#FFD700" /><circle r="6" fill="#5D4037" /><circle r="2" fill="#fff" opacity="0.3" cx="2" cy="-2"/>`;
+                } else {
+                    // Grape (Default): Cluster of purple circles
+                    shape = `
+                        <circle cx="-5" cy="-5" r="5" fill="var(--f-grape)"/>
+                        <circle cx="5" cy="-5" r="5" fill="var(--f-grape)"/>
+                        <circle cx="0" cy="5" r="5" fill="var(--f-grape)"/>
+                        <path d="M0,-10 L0,-15" stroke="var(--p-leaf-mid)" stroke-width="2"/>
+                    `;
+                }
+                
+                content = `<g class="bloom-group">${shape}</g>`;
+            } else {
+                // UNOPENED POD
+                // A simple tapered bud shape
+                content = `<path class="pod-shape" d="M0,10 Q-8,0 0,-12 Q8,0 0,10 Z" />`;
+            }
+
+            // Click Handler
+            // Only allow clicking today or past (future days are just visual path)
+            // Or allow back-filling? User said "look back", implied read-only, but let's assume standard habit tracking allows back-filling.
+            const todayDate = new Date();
+            const thisDate = new Date(pt.date);
+            // Allow clicking if it's not in the future
+            const isFuture = thisDate > todayDate;
+            const clickAttr = (isFuture || isDeleteMode) ? '' : `onclick="toggleHabit('${habit.id}', '${pt.date}')"`;
+            const opacity = isFuture ? '0.3' : '1';
+
+            nodesHTML += `
+                <g transform="translate(${pt.x},${pt.y})" class="pod-group" ${clickAttr} style="opacity:${opacity}">
+                    ${content}
+                    <text y="25" class="calendar-day-label">${pt.date.split('-')[2]}</text>
+                </g>
+            `;
+        });
+
+        const svgContent = `
+            <svg class="vine-calendar-svg" viewBox="0 0 ${cols * colWidth + 20} ${svgHeight}">
+                <path d="${pathD}" fill="none" stroke="var(--p-leaf-dark)" stroke-width="3" stroke-linecap="round" />
+                ${nodesHTML}
+            </svg>
+        `;
+
+        card.innerHTML = header + `<div class="calendar-grid-container">` + svgContent + `</div>`;
+        container.appendChild(card);
     });
+}
+
+// 4. Toggle Logic (With Anti-Farming)
+function toggleHabit(id, date) {
+    if (isDeleteMode) return;
+    
+    const habit = gardenData.habits.find(h => h.id == id);
+    if (!habit) return;
+
+    if (habit.history[date]) {
+        // UNCHECKING (Removing Fruit)
+        // ANTI-FARMING CHECK: Do they have a coin to "pay back"?
+        if (gardenData.coins > 0) {
+            delete habit.history[date];
+            gardenData.coins--; // Take back the coin
+        } else {
+            alert("🌱 Nature Balance: You spent the coin earned from this habit! You cannot undo it now.");
+            return; 
+        }
+    } else {
+        // CHECKING (Blooming Pod)
+        habit.history[date] = true;
+        gardenData.coins++; // Award coin
+        
+        // Trigger generic "pop" sound or visual here if desired
+    }
+    
+    saveData();
+    renderHabits();
+}
+
+function deleteHabit(id) {
+    if(confirm("Remove this vine completely?")) {
+        gardenData.habits = gardenData.habits.filter(h => h.id !== id);
+        saveData();
+        renderHabits();
+    }
 }
 
 // Logic
@@ -335,8 +564,7 @@ function openHabitDialog() {
     document.getElementById('habit-form').reset(); document.getElementById('habit-dialog').showModal(); 
 }
 document.getElementById('habit-form').addEventListener('submit', (e)=>{ e.preventDefault(); gardenData.habits.push({id:Date.now(), title:document.getElementById('habit-title').value, type:document.getElementById('habit-type').value, history:{}}); saveData(); renderHabits(); document.getElementById('habit-dialog').close(); });
-function toggleHabit(id,d){ if(isDeleteMode)return; const h=gardenData.habits.find(x=>x.id==id); if(h){ if(h.history[d]){ delete h.history[d]; gardenData.coins=Math.max(0,gardenData.coins-1); } else { h.history[d]=true; gardenData.coins++; } saveData(); renderHabits(); } }
-function deleteHabit(id){ gardenData.habits=gardenData.habits.filter(h=>h.id!==id); saveData(); renderHabits(); }
+
 
 function openShopDialog() { 
     if(!checkAuth()) return; // GATEKEEPER
