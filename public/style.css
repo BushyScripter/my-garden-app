@@ -671,22 +671,22 @@ dialog::backdrop { background: rgba(0,0,0,0.9); backdrop-filter: blur(8px); }
     top: 20px;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 999999; /* Fix: Higher than dialogs */
+    z-index: 999999; /* Fix: Higher than everything */
     display: flex;
     flex-direction: column;
     gap: 10px;
-    pointer-events: none; /* Let clicks pass through empty space */
+    pointer-events: none;
 }
 
 .garden-toast {
-    background: rgba(20, 30, 20, 0.9);
+    background: rgba(20, 30, 20, 0.95);
     backdrop-filter: blur(10px);
     border: 1px solid var(--p-leaf-lime);
     color: #fff;
-    padding: 15px 25px;
+    padding: 12px 25px;
     border-radius: 30px;
     font-weight: 700;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
     display: flex;
     align-items: center;
     gap: 10px;
@@ -694,70 +694,35 @@ dialog::backdrop { background: rgba(0,0,0,0.9); backdrop-filter: blur(8px); }
     transform: translateY(-20px);
     animation: slideInToast 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     pointer-events: auto;
-    position: relative;
-    overflow: visible;
 }
 
-.garden-toast.fade-out {
-    animation: fadeOutToast 0.3s forwards;
+.garden-toast.fade-out { animation: fadeOutToast 0.3s forwards; }
+
+@keyframes slideInToast { to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeOutToast { to { opacity: 0; transform: translateY(-20px) scale(0.9); } }
+
+/* --- MOBILE PLANT CARD FIX --- */
+.plant-click-area {
+    cursor: pointer;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-/* Toast Particles */
-.toast-particle {
-    position: absolute;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--p-leaf-lime);
-    pointer-events: none;
-    animation: toastPop 0.6s ease-out forwards;
+.plant-action-btn {
+    margin-top: 10px;
+    background: var(--p-leaf-mid);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: transform 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid rgba(255,255,255,0.2);
 }
-
-@keyframes slideInToast {
-    to { opacity: 1; transform: translateY(0); }
-}
-@keyframes fadeOutToast {
-    to { opacity: 0; transform: translateY(-20px) scale(0.9); }
-}
-@keyframes toastPop {
-    0% { transform: translate(0,0) scale(1); opacity: 1; }
-    100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
-}
-
-/* --- Mobile Adjustments --- */
-@media (max-width: 768px) {
-    header {
-        position: fixed; 
-        top: 0; left: 0; width: 100%;
-        z-index: 1000;
-        background-color: #111a11;
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        overflow-x: auto;
-        white-space: nowrap;
-        flex-wrap: nowrap !important;
-        padding: 15px 20px;
-        gap: 20px;
-        -webkit-overflow-scrolling: touch;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    }
-    header::-webkit-scrollbar { display: none; }
-    body { padding-top: 80px !important; overflow-y: auto; }
-    header nav { display: flex; gap: 15px; flex-shrink: 0; }
-    .page-section {
-        min-height: calc(100vh - 80px);
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-    h1 { font-size: 2.5rem !important; text-align: center; }
-    p { text-align: center; }
-}
-
-/* Animations */
-@keyframes pulseRed { 0% { text-shadow: 0 0 5px var(--fire); transform: scale(1); } 50% { text-shadow: 0 0 15px var(--fire); transform: scale(1.2); } 100% { text-shadow: 0 0 5px var(--fire); transform: scale(1); } }
-@keyframes waterPlant { 0% { opacity: 1; transform: translateX(-50%) rotate(0deg); } 50% { transform: translateX(-50%) rotate(-30deg); } 100% { opacity: 0; transform: translateX(-50%) rotate(0deg); } }
-@keyframes plantShake { 0% { transform: rotate(0deg); } 25% { transform: rotate(5deg); } 75% { transform: rotate(-5deg); } 100% { transform: rotate(0deg); } }
-@keyframes popCoin { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: scale(1); } }
+.plant-action-btn:active { transform: scale(0.95); }
