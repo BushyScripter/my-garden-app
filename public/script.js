@@ -255,7 +255,7 @@ function renderSelector(containerId, sourceData, stateKey, currentVal) {
         `;
 
         card.onclick = () => {
-            if(!isUnlocked) { alert("Unlock this in the Shop first!"); return; }
+            if(!isUnlocked) { showNotification("Unlock in Shop!", "🔒"); return; }
             if(isLockedPremium) { document.getElementById('premium-dialog').showModal(); return; }
             
             // Update State
@@ -560,12 +560,44 @@ function getPlantSVG(growth, type, potStyle) {
     return `<svg viewBox="0 0 200 220" class="interactive-plant-svg">${potSVG}${plantSVG}</svg>`;
 }
 
+/* --- NEW NOTIFICATION SYSTEM --- */
+function showNotification(message, icon = "✨") {
+    const container = document.getElementById('notification-container');
+    const toast = document.createElement('div');
+    toast.className = 'garden-toast';
+    toast.innerHTML = `<span style="font-size:1.2rem">${icon}</span> <span>${message}</span>`;
+
+    // Add Particles
+    for(let i=0; i<8; i++) {
+        const p = document.createElement('div');
+        p.className = 'toast-particle';
+        // Random direction
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 30 + Math.random() * 20;
+        p.style.setProperty('--tx', `${Math.cos(angle) * dist}px`);
+        p.style.setProperty('--ty', `${Math.sin(angle) * dist}px`);
+        p.style.left = '50%';
+        p.style.top = '50%';
+        // Random colors
+        p.style.background = Math.random() > 0.5 ? '#AEEA00' : '#FFD700'; 
+        toast.appendChild(p);
+    }
+
+    container.appendChild(toast);
+
+    // Auto remove
+    setTimeout(() => {
+        toast.classList.add('fade-out');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+/* --- UPDATED RENDER PLANTS (Mobile Fix) --- */
 function renderPlants() {
     const container = document.getElementById('garden-grid-container');
     container.innerHTML = '';
     
     gardenData.plants.forEach(plant => {
-        // Handle Counter logic vs Checklist logic
         let progress = 0;
         let progressText = "";
         
@@ -579,17 +611,68 @@ function renderPlants() {
             progressText = `${done} / ${total}`;
         }
         
+        if(progress >= 100) plant.growth = 2; else if(progress > 0) plant.growth = 1; else plant.growth = 0;
+
         const card = document.createElement('div');
         card.className = 'potted-plant-card';
-        card.onclick = () => { if(isDeleteMode) { gardenData.plants = gardenData.plants.filter(p=>p.id!==plant.id); saveData(); renderPlants(); } else openPlantDialog(plant.id); };
         
-        card.innerHTML = `
+        // 1. CLICK AREA: Opens the Dialog (Edit Mode)
+        // We wrap the visuals and title in a separate div so clicking them opens settings
+        const clickArea = document.createElement('div');
+        clickArea.className = 'plant-click-area';
+        clickArea.onclick = () => { 
+            if(isDeleteMode) {
+                if(confirm("Delete Project?")) { 
+                    gardenData.plants = gardenData.plants.filter(p=>p.id!==plant.id); 
+                    saveData(); 
+                    renderPlants(); 
+                }
+            } else {
+                openPlantDialog(plant.id);
+            }
+        };
+
+        clickArea.innerHTML = `
             <div class="plant-visual-container">${getPlantSVG(plant.growth, plant.type, plant.pot)}</div>
-            <div class="plant-info">
-                <h3>${plant.title}</h3>
-                <div class="progress-bar-container"><div class="progress-bar-fill" style="width:${progress}%"></div></div>
+            <div class="plant-info" style="pointer-events:none;"> <h3>${plant.title}</h3>
+                <div class="progress-bar-container"><div class="progress-bar-fill" style="width:${Math.min(progress,100)}%"></div></div>
                 <div style="font-size:0.7rem; color:#aaa; margin-top:4px;">${progressText}</div>
-            </div>`;
+            </div>
+        `;
+        
+        // 2. ACTION BUTTON: Increments Counter (Only shows for Counter mode)
+        let actionBtnHTML = "";
+        if(plant.taskMode === 'counter' && !isDeleteMode) {
+            const btn = document.createElement('button');
+            btn.className = 'plant-action-btn';
+            btn.innerHTML = `<span>💧</span> Grow (+1)`;
+            btn.onclick = (e) => {
+                // STOP propagation so we don't open the dialog
+                e.stopPropagation(); 
+                
+                plant.counterVal++;
+                gardenData.coins++;
+                showNotification("+1 Coin!", "🪙"); // Use new notification
+                
+                // Add temporary shake effect
+                card.querySelector('.interactive-plant-svg').style.animation = 'plantShake 0.5s ease';
+                setTimeout(()=> card.querySelector('.interactive-plant-svg').style.animation = '', 500);
+                
+                saveData();
+                renderPlants();
+            };
+            actionBtnHTML = btn;
+        } else if (plant.taskMode === 'checklist' && !isDeleteMode) {
+            // For checklist, button just opens dialog too, but explicit text helps mobile users
+            const btn = document.createElement('button');
+            btn.className = 'plant-action-btn';
+            btn.innerHTML = `<span>📝</span> View List`;
+            btn.onclick = (e) => { e.stopPropagation(); openPlantDialog(plant.id); };
+            actionBtnHTML = btn;
+        }
+
+        card.appendChild(clickArea);
+        if(actionBtnHTML) card.appendChild(actionBtnHTML); // Append button separately
         
         container.appendChild(card);
     });
@@ -650,10 +733,12 @@ function buyItem(key, price) {
         gardenData.coins -= price;
         gardenData.unlockedItems.push(key);
         saveData();
-        renderShopTab(currentShopTab); // Re-render to show "Owned"
-        alert(`Purchased ${key}!`);
+        renderShopTab(currentShopTab); 
+        // NEW NOTIFICATION
+        showNotification(`Purchased ${key}!`, "🛍️");
     } else {
-        alert("Not enough coins!");
+        // NEW NOTIFICATION (Error style implied by emoji)
+        showNotification("Not enough coins!", "🚫");
     }
 }
 
