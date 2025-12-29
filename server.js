@@ -23,6 +23,7 @@ const pool = new Pool({
 });
 
 // Initialize Database Table
+// Note: Even if we say BOOLEAN here, if the table already exists as INTEGER, it stays INTEGER.
 pool.query(`
     CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -30,7 +31,7 @@ pool.query(`
         password TEXT NOT NULL,
         garden_data TEXT,
         stripe_customer_id TEXT,
-        is_premium BOOLEAN DEFAULT FALSE
+        is_premium INTEGER DEFAULT 0
     )
 `).catch(err => console.error("DB Setup Error:", err));
 
@@ -66,9 +67,10 @@ app.post('/api/register', async (req, res) => {
         const customer = await stripe.customers.create({ email: email });
         
         // Save User to DB
+        // FIX: We send '0' instead of 'false' to satisfy the INTEGER column type
         await pool.query(
             `INSERT INTO users (email, password, garden_data, stripe_customer_id, is_premium) VALUES ($1, $2, $3, $4, $5)`,
-            [email, hashedPassword, defaultData, customer.id, false]
+            [email, hashedPassword, defaultData, customer.id, 0]
         );
         res.json({ message: "User created." });
     } catch (e) {
@@ -90,28 +92,33 @@ app.post('/api/login', async (req, res) => {
         }
 
         // Check Stripe Subscription Status on Login
-        let isPremium = user.is_premium;
+        // We assume 1 is true, 0 is false
+        let isPremiumBool = user.is_premium === 1; 
+        
         if(user.stripe_customer_id) {
             const subscriptions = await stripe.subscriptions.list({
                 customer: user.stripe_customer_id,
                 status: 'active',
                 limit: 1
             });
-            isPremium = subscriptions.data.length > 0;
+            const stripeSaysPremium = subscriptions.data.length > 0;
+            
             // Update DB if status changed
-            if(isPremium !== user.is_premium) {
-                await pool.query(`UPDATE users SET is_premium = $1 WHERE id = $2`, [isPremium, user.id]);
+            if(stripeSaysPremium !== isPremiumBool) {
+                // FIX: Convert boolean back to 1 or 0 for the database update
+                await pool.query(`UPDATE users SET is_premium = $1 WHERE id = $2`, [stripeSaysPremium ? 1 : 0, user.id]);
+                isPremiumBool = stripeSaysPremium;
             }
         }
 
         const token = jwt.sign({ id: user.id }, SECRET_KEY, { expiresIn: 86400 }); // 24 hours
         
-        // Return Auth Token + Data + Premium Status
+        // Return Auth Token + Data + Premium Status (as boolean for the frontend)
         res.json({ 
             auth: true, 
             token: token, 
             data: JSON.parse(user.garden_data), 
-            isPremium: isPremium 
+            isPremium: isPremiumBool 
         });
     } catch (e) {
         console.error(e);
@@ -142,7 +149,7 @@ app.get('/api/load', verifyToken, async (req, res) => {
         
         res.json({ 
             data: JSON.parse(row.garden_data), 
-            isPremium: row.is_premium 
+            isPremium: row.is_premium === 1 // Convert 1/0 to true/false for frontend
         });
     } catch (e) {
         console.error("Load Error:", e);
