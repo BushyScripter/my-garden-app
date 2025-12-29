@@ -563,7 +563,32 @@ function openHabitDialog() {
     if(!isPremiumUser && gardenData.habits.length>=MAX_FREE_ITEMS){document.getElementById('premium-dialog').showModal();return;} 
     document.getElementById('habit-form').reset(); document.getElementById('habit-dialog').showModal(); 
 }
-document.getElementById('habit-form').addEventListener('submit', (e)=>{ e.preventDefault(); gardenData.habits.push({id:Date.now(), title:document.getElementById('habit-title').value, type:document.getElementById('habit-type').value, history:{}}); saveData(); renderHabits(); document.getElementById('habit-dialog').close(); });
+// This handles the "Plant Vine" button click
+document.getElementById('habit-form').addEventListener('submit', (e) => { 
+    e.preventDefault(); 
+    
+    // Ensure the habits array exists so the button doesn't fail
+    if (!gardenData.habits) {
+        gardenData.habits = [];
+    }
+
+    // Create the new vine/habit
+    const newHabit = {
+        id: Date.now(), 
+        title: document.getElementById('habit-title').value, 
+        type: document.getElementById('habit-type').value, 
+        history: {}
+    };
+
+    gardenData.habits.push(newHabit); 
+
+    // Save to database and draw the new vine immediately
+    saveData(); 
+    renderHabits(); 
+    
+    // Close the dialog box
+    document.getElementById('habit-dialog').close(); 
+});
 
 
 function openShopDialog() { 
