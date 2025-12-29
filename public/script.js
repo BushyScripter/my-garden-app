@@ -370,37 +370,56 @@ document.getElementById('habit-form').addEventListener('submit', (e) => {
     document.getElementById('habit-dialog').close();
 });
 
-/* --- UPDATED HABIT LOGIC --- */
+/* --- IMPROVED HABIT LOGIC (REDONE) --- */
 
 function renderHabits() {
     const container = document.getElementById('habits-container');
     const { days, monthName } = getMonthData(currentViewDate);
     
-    document.getElementById('calendar-month-label').innerText = monthName;
+    // Update Month Title
+    const monthLabel = document.getElementById('calendar-month-label');
+    if(monthLabel) monthLabel.innerText = monthName;
+    
     container.innerHTML = '';
 
+    // Empty State
     if (!gardenData.habits || gardenData.habits.length === 0) {
-        container.innerHTML = `<div style="text-align:center; padding:40px; color:#aaa;">No habits yet.<br>Click the 🍇 button to start.</div>`;
+        container.innerHTML = `
+            <div style="text-align:center; padding:40px; color:#aaa; background:rgba(0,0,0,0.2); border-radius:20px;">
+                <div style="font-size:3rem; margin-bottom:10px;">🍇</div>
+                <div>No habits planted yet.</div>
+                <div style="font-size:0.8rem; margin-top:5px;">Click the Grape icon to start!</div>
+            </div>`;
         return;
     }
 
     gardenData.habits.forEach(habit => {
-        const stats = calculateStreak(habit.history);
+        const streak = Object.keys(habit.history).length; // Simple streak calc
+        
         const card = document.createElement('div');
         card.className = 'habit-calendar-card';
-        if(isDeleteMode) card.onclick = () => { if(confirm("Delete Vine?")) { gardenData.habits = gardenData.habits.filter(h=>h.id!==habit.id); saveData(); renderHabits(); }};
+        
+        // Delete Mode Click Handler
+        if(isDeleteMode) {
+            card.onclick = () => { 
+                if(confirm(`Delete habit "${habit.title}"?`)) { 
+                    gardenData.habits = gardenData.habits.filter(h => h.id !== habit.id); 
+                    saveData(); 
+                    renderHabits(); 
+                }
+            };
+            card.style.borderColor = '#ff4444';
+        }
 
         const header = `
             <div class="habit-header">
                 <h3>${habit.title}</h3>
-                <div style="display:flex; gap:10px;">
-                    <span class="habit-streak-badge">🔥 ${stats.current}</span>
-                </div>
+                <span class="habit-streak-badge">🔥 ${streak} Days</span>
             </div>`;
 
-        // SVG Layout Logic
+        // --- SVG VINE GENERATION ---
         const cols = 7;
-        const rowHeight = 60;
+        const rowHeight = 70; // More space for animation
         const colWidth = 50;
         const svgHeight = Math.ceil(days.length / cols) * rowHeight + 20;
         
@@ -410,95 +429,94 @@ function renderHabits() {
         days.forEach((day, i) => {
             const row = Math.floor(i / cols);
             const col = i % cols;
-            // Alternating rows for snake layout
+            
+            // Snake Layout: Even rows go Left->Right, Odd rows go Right->Left
             const isEvenRow = row % 2 === 0;
             const x = isEvenRow ? (col * colWidth) + 30 : ((cols - 1 - col) * colWidth) + 30;
             const y = (row * rowHeight) + 30;
             
-            // Draw Vine Path
-            if (i === 0) pathD += `M ${x} ${y}`;
-            else {
-                const prevRow = Math.floor((i-1)/cols);
-                const prevCol = (i-1)%cols;
-                const isPrevEven = prevRow%2===0;
-                const px = isPrevEven ? (prevCol*colWidth)+30 : ((cols-1-prevCol)*colWidth)+30;
-                const py = (prevRow*rowHeight)+30;
-                pathD += ` C ${px} ${py+30}, ${x} ${y-30}, ${x} ${y}`;
+            // Calculate Vine Path (Bezier Curves)
+            if (i === 0) {
+                pathD += `M ${x} ${y}`;
+            } else {
+                const prevRow = Math.floor((i-1) / cols);
+                const prevCol = (i-1) % cols;
+                const isPrevEven = prevRow % 2 === 0;
+                const px = isPrevEven ? (prevCol * colWidth) + 30 : ((cols - 1 - prevCol) * colWidth) + 30;
+                const py = (prevRow * rowHeight) + 30;
+                
+                // Curve control points for smooth vine
+                pathD += ` C ${px} ${py + 40}, ${x} ${y - 40}, ${x} ${y}`;
             }
 
-            // Determine content (Pod or Fruit)
+            // Visual Logic
             const isDone = habit.history[day];
-            const vineConfig = VINE_TYPES[habit.type] || VINE_TYPES['grape'];
+            const isFuture = new Date(day) > new Date();
+            const color = VINE_TYPES[habit.type]?.color || '#9C27B0';
             
-            let visualContent = "";
+            // 1. Define Visuals
+            let visual = "";
             
             if (isDone) {
-                // 1. Define the Fruit Shape
-                let shape = "";
-                if(habit.type === 'grape') {
-                     shape = `<circle cx="-5" cy="-5" r="5" fill="#9C27B0"/><circle cx="5" cy="-5" r="5" fill="#9C27B0"/><circle cx="0" cy="5" r="5" fill="#9C27B0"/>`;
-                } else if (habit.type === 'tomato') {
-                     shape = `<circle r="12" fill="#D50000"/><path d="M-8,-8 L0,-12 L8,-8 L0,0 Z" fill="#1B5E20"/>`;
-                } else if (habit.type === 'blueberry') {
-                     shape = `<circle cx="-4" cy="4" r="6" fill="#3F51B5"/><circle cx="4" cy="-4" r="5" fill="#303F9F"/>`;
-                } else if (habit.type === 'strawberry') {
-                     shape = `<path d="M0,10 L-8,-5 Q-10,-10 0,-10 Q10,-10 8,-5 Z" fill="#FF1744"/><path d="M-5,-10 L0,-14 L5,-10" fill="#2E7D32"/>`;
-                } else {
-                    // Fallback
-                    shape = `<circle r="12" fill="${vineConfig.color}" />`;
-                }
-
-                // 2. Define the Particle Burst
+                // Completed: Bloom + Particles
+                const shape = `<circle r="12" fill="${color}" stroke="white" stroke-width="1"/>`; // Fruit
                 const particles = `
                     <g class="particle-burst">
-                        <circle cx="0" cy="0" r="2" fill="white"/>
-                        <circle cx="0" cy="0" r="2" fill="${vineConfig.color}"/>
+                        <circle cx="0" cy="0" r="2" fill="${color}"/>
+                        <circle cx="0" cy="0" r="2" fill="#fff"/>
                         <circle cx="0" cy="0" r="2" fill="gold"/>
-                        <circle cx="0" cy="0" r="2" fill="white"/>
-                        <circle cx="0" cy="0" r="2" fill="${vineConfig.color}"/>
+                        <circle cx="0" cy="0" r="2" fill="${color}"/>
+                        <circle cx="0" cy="0" r="2" fill="#fff"/>
                         <circle cx="0" cy="0" r="2" fill="gold"/>
-                    </g>
-                `;
-                
-                // 3. Combine into Bloom Group
-                visualContent = `<g class="bloom-group">${particles}${shape}</g>`;
+                    </g>`;
+                visual = `<g class="bloom-group">${particles}${shape}</g>`;
             } else {
-                // Closed Pod (Default state)
-                visualContent = `<path class="pod-shape" d="M0,10 Q-6,0 0,-10 Q6,0 0,10 Z" />`;
+                // Not Done: Closed Pod
+                visual = `<path d="M0,10 Q-6,0 0,-10 Q6,0 0,10 Z" fill="#2E7D32" stroke="#1B5E20" stroke-width="1" />`;
             }
 
-            const isFuture = new Date(day) > new Date();
-            const clickAttr = (isFuture || isDeleteMode) ? '' : `onclick="toggleHabit('${habit.id}', '${day}')"`;
+            // 2. Interaction
+            // If it's a future date, disable click. If Delete Mode, disable toggle.
+            const clickAction = (isFuture || isDeleteMode) ? '' : `onclick="toggleHabit('${habit.id}', '${day}')"`;
             const opacity = isFuture ? 0.3 : 1;
-            
-            // STABLE HIT BOX ADDED: <rect width="50" height="50" ... class="hit-box">
-            // This ensures the click target is always big and never moves.
+
             nodesHTML += `
-                <g transform="translate(${x},${y})" class="pod-group" ${clickAttr} style="opacity:${opacity}">
+                <g transform="translate(${x},${y})" class="pod-group" ${clickAction} style="opacity:${opacity}">
                     <rect x="-25" y="-25" width="50" height="50" class="hit-box" />
+                    
                     <g class="visual-content">
-                        ${visualContent}
+                        ${visual}
                     </g>
+                    
                     <text y="28" class="calendar-day-label">${day.split('-')[2]}</text>
                 </g>`;
         });
 
-        card.innerHTML = header + `<div class="calendar-grid-container"><svg class="vine-calendar-svg" viewBox="0 0 ${cols*colWidth+20} ${svgHeight}"><path d="${pathD}" fill="none" stroke="#2E7D32" stroke-width="3"/>${nodesHTML}</svg></div>`;
+        // Assemble SVG
+        const svgContent = `
+            <svg class="vine-calendar-svg" viewBox="0 0 ${cols * colWidth + 20} ${svgHeight}">
+                <path d="${pathD}" fill="none" stroke="#388E3C" stroke-width="3" stroke-linecap="round"/>
+                ${nodesHTML}
+            </svg>`;
+
+        card.innerHTML = header + `<div class="calendar-grid-container">${svgContent}</div>`;
         container.appendChild(card);
     });
 }
 
 function toggleHabit(id, date) {
+    if(isDeleteMode) return; // Don't toggle if in delete mode
+    
     const habit = gardenData.habits.find(h => h.id == id);
     if (!habit) return;
 
     if (habit.history[date]) {
-        // UNCHECKING: Remove coin, remove history
+        // UNCHECK: Remove coin, remove history
         delete habit.history[date];
-        // Ensure coins don't go negative
-        gardenData.coins = Math.max(0, gardenData.coins - 1);
+        // Prevent negative coins
+        if(gardenData.coins > 0) gardenData.coins--;
     } else {
-        // CHECKING: Add coin, add history
+        // CHECK: Add coin, add history
         habit.history[date] = true;
         gardenData.coins++;
     }
@@ -506,6 +524,7 @@ function toggleHabit(id, date) {
     saveData();
     renderHabits();
 }
+
 function changeMonth(offset) {
     currentViewDate.setMonth(currentViewDate.getMonth() + offset);
     renderHabits();
