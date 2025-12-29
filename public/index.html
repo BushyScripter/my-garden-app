@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Garden</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
-    
+    <title>My Digital Garden</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800;900&display=swap" rel="stylesheet">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3438241188942945" crossorigin="anonymous"></script>
-    
+    <link rel="stylesheet" href="style.css">
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-964PQYS7CR"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
@@ -15,24 +14,20 @@
         gtag('js', new Date());
         gtag('config', 'G-964PQYS7CR');
     </script>
-    
-    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <header>
         <div class="logo" onclick="showPage('home')">🌿 Digital Garden</div>
         <div class="header-controls">
-            <button id="premium-header-btn" class="premium-btn-header" onclick="handlePremiumClick()">👑 Premium</button>
-            <div class="coin-display">🪙 <span id="coin-count">0</span></div>
-            
+            <button id="premium-btn" class="premium-btn-header" onclick="handlePremiumClick()">👑 Go Premium</button>
+            <div class="coin-display" id="coin-display">🪙 <span id="coin-count">0</span></div>
             <nav class="nav-group">
                 <button class="nav-btn active" onclick="showPage('home')">Home</button>
                 <button class="nav-btn" onclick="safeNavigate('garden')">Projects</button>
                 <button class="nav-btn" onclick="safeNavigate('habits')">Habits</button>
             </nav>
-            
-            <button id="account-btn" class="account-btn" onclick="openAuthDialog()">👤 Login</button>
+            <button id="account-btn" class="nav-btn account-btn" onclick="handleAccountClick()">👤 Login</button>
         </div>
     </header>
 
@@ -40,127 +35,158 @@
         <div class="bg-particles-wrapper" id="bg-particles-container"></div>
         
         <main>
-            <section id="home" class="page-section active center-content">
-                <h1 class="hero-title">Grow Your<br>Potential</h1>
+            <section id="home" class="page-section active" style="justify-content:center; align-items:center;">
+                <div class="hero-plant-decoration">
+                    <svg viewBox="0 0 200 200" style="width: 300px; opacity: 0.1; position:absolute; top:-50px; right: 10%;">
+                        <path d="M100,200 Q120,100 180,50" stroke="var(--p-leaf-dark)" stroke-width="5" fill="none"/>
+                        <circle cx="180" cy="50" r="20" fill="var(--p-leaf-lime)"/>
+                        <path d="M100,200 Q80,100 20,80" stroke="var(--p-leaf-dark)" stroke-width="5" fill="none"/>
+                        <circle cx="20" cy="80" r="15" fill="var(--p-leaf-mid)"/>
+                    </svg>
+                </div>
+
+                <h1 class="hero-title">Welcome<br>Gardener</h1>
                 <p class="hero-subtitle">Track habits, grow plants, and earn coins.<br>Your personal digital sanctuary.</p>
                 
-                <div class="hero-actions">
-                    <button class="hero-btn primary" onclick="safeNavigate('garden')">🌱 Go to Garden</button>
-                    <button class="hero-btn secondary" onclick="openShopDialog()">🛒 Shop Seeds</button>
+                <div style="margin-top: 30px; display:flex; gap: 15px; z-index: 10;">
+                    <button class="tool-btn" onclick="safeAction(openShopDialog)" title="Garden Center" style="background: var(--p-leaf-mid);">🛒</button>
+                    <button class="tool-btn" onclick="safeNavigate('garden')" title="Go to Garden" style="background: var(--p-pot-terra);">🌱</button>
                 </div>
+                
+                <footer style="margin-top: auto; font-size: 0.8rem; opacity: 0.6; padding-bottom: 20px;">
+                    <a href="/privacy.html" target="_blank" style="color: var(--text-secondary); margin-right: 20px;">Privacy Policy</a>
+                </footer>
             </section>
 
             <section id="garden" class="page-section">
                 <div class="content-wrapper">
-                    <div class="toolbar">
+                    <div class="garden-toolbar">
                         <button class="tool-btn" onclick="openPlantDialog()" title="New Project">🌱</button>
                         <button class="tool-btn" onclick="openShopDialog()" title="Garden Center">🛒</button>
-                        <button class="tool-btn" id="delete-mode-btn" onclick="toggleDeleteMode()" title="Remove Tool">🧤</button>
+                        <button class="tool-btn" id="delete-mode-btn" onclick="toggleDeleteMode()" title="Toggle Remove Tool">🧤</button>
                     </div>
-                    <div id="garden-grid-container" class="garden-grid"></div>
+                    <div class="garden-grid" id="garden-grid-container"></div>
                 </div>
             </section>
 
             <section id="habits" class="page-section">
                 <div class="content-wrapper">
-                    <div class="toolbar">
+                    <div class="garden-toolbar">
                         <button class="tool-btn" onclick="openHabitDialog()" title="New Habit">🍇</button>
-                        <button class="tool-btn" onclick="toggleDeleteMode()" title="Remove Tool">🧤</button>
+                        <button class="tool-btn" id="delete-mode-btn-2" onclick="toggleDeleteMode()" title="Toggle Remove Tool">🧤</button>
                     </div>
+
                     <div class="calendar-controls">
-                        <button class="nav-arrow" onclick="changeMonth(-1)">◀</button>
-                        <h2 id="calendar-month-label">Month</h2>
-                        <button class="nav-arrow" onclick="changeMonth(1)">▶</button>
+                        <button class="nav-arrow-btn" onclick="changeMonth(-1)">◀</button>
+                        <h2 id="calendar-month-label">Month Year</h2>
+                        <button class="nav-arrow-btn" onclick="changeMonth(1)">▶</button>
                     </div>
-                    <div id="habits-container" class="habits-list"></div>
+
+                    <div class="habits-container" id="habits-container"></div>
                 </div>
             </section>            
         </main>
     </div>
 
-    <div class="ad-container" id="adsense-container" style="text-align:center; padding:20px; background:rgba(0,0,0,0.2);">
-        <div class="ad-placeholder" style="color:#666; font-size:0.8rem;">Advertisement</div>
-        </div>
+    <div class="ad-container" id="adsense-container"><div class="ad-placeholder">AdSense</div></div>
 
     <dialog id="auth-dialog">
-        <div class="dialog-content center-text">
-            <h2>Account Access</h2>
-            <div id="auth-error" style="color:#ff4444; margin-bottom:10px;"></div>
-            
+        <div class="auth-container">
+            <h2 id="auth-title" style="color:var(--p-leaf-lime);">Login to Garden</h2>
             <form id="auth-form">
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="auth-email" required placeholder="email@example.com">
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="auth-pass" required placeholder="******">
-                </div>
-                <div style="display:flex; gap:10px; margin-top:15px;">
-                    <button type="button" class="btn-primary full-width" onclick="performLogin()">Login</button>
-                    <button type="button" class="btn-secondary full-width" onclick="performRegister()">Register</button>
-                </div>
+                <div class="form-group"><label>Email</label><input type="email" id="auth-email" required placeholder="user@example.com"></div>
+                <div class="form-group"><label>Password</label><input type="password" id="auth-pass" required placeholder="******"></div>
+                <button type="submit" class="btn-primary" style="width:100%;" id="auth-submit-btn">Login</button>
             </form>
-            
-            <hr style="border-color:rgba(255,255,255,0.1); margin: 20px 0;">
-            <button class="btn-secondary full-width" onclick="continueAsGuest()">Continue as Guest</button>
+            <span class="auth-toggle" onclick="toggleAuthMode()" id="auth-toggle-text">New here? Create Account</span>
+           <button id="guest-btn" type="button" class="btn-secondary" style="margin-top:15px; width:100%; border:none; color:#aaa; font-size:0.8rem;">Continue as Guest</button>
         </div>
     </dialog>
 
     <dialog id="plant-dialog" class="large-dialog">
         <form method="dialog" id="plant-form">
-            <h2>New Project</h2>
-            <div class="form-group"><label>Project Name</label><input type="text" id="plant-title" required></div>
-            <div class="form-group"><label>Seed</label><div class="selection-grid" id="plant-type-selector"></div></div>
-            <div class="form-group"><label>Pot</label><div class="selection-grid" id="plant-pot-selector"></div></div>
+            <h2 style="color:var(--p-leaf-lime); margin-top:0;">New Plant Project</h2>
+            <input type="hidden" id="plant-id">
+            
             <div class="form-group">
-                <label>Type</label>
+                <label>Project Name</label>
+                <input type="text" id="plant-title" required placeholder="e.g., Learn Spanish">
+            </div>
+
+            <div class="form-group">
+                <label>Choose Seed</label>
+                <div class="selection-grid" id="plant-type-selector"></div>
+            </div>
+            
+            <div class="form-group">
+                <label>Choose Pot Style</label>
+                <div class="selection-grid" id="plant-pot-selector"></div>
+            </div>
+
+            <div class="form-group">
+                <label>Task Type</label>
                 <div class="toggle-group">
                     <button type="button" class="toggle-btn active" id="task-type-check" onclick="setTaskMode('checklist')">Checklist</button>
                     <button type="button" class="toggle-btn" id="task-type-count" onclick="setTaskMode('counter')">Counter</button>
                 </div>
             </div>
-            <div id="task-input-area" class="form-group"></div>
+
+            <div class="form-group" id="task-input-area">
+                </div>
+
             <div class="dialog-actions">
                 <button type="button" class="btn-secondary" onclick="closePlantDialog()">Cancel</button>
-                <button type="submit" class="btn-primary">Plant</button>
+                <button type="submit" class="btn-primary">Plant It</button>
             </div>
         </form>
     </dialog>
 
     <dialog id="habit-dialog">
         <form method="dialog" id="habit-form">
-            <h2>New Habit</h2>
-            <div class="form-group"><label>Name</label><input type="text" id="habit-title" required></div>
-            <div class="form-group"><label>Style</label><div class="selection-grid" id="habit-type-selector"></div></div>
+            <h2 style="color:var(--f-grape); margin-top:0;">New Habit Vine</h2>
+            <div class="form-group">
+                <label>Habit Name</label>
+                <input type="text" id="habit-title" required placeholder="e.g., Drink Water">
+            </div>
+            
+            <div class="form-group">
+                <label>Choose Fruit/Flower</label>
+                <div class="selection-grid" id="habit-type-selector"></div>
+            </div>
+
             <div class="dialog-actions">
                 <button type="button" class="btn-secondary" onclick="document.getElementById('habit-dialog').close()">Cancel</button>
-                <button type="submit" class="btn-primary">Plant</button>
+                <button type="submit" class="btn-primary">Plant Vine</button>
             </div>
         </form>
     </dialog>
 
     <dialog id="shop-dialog" class="large-dialog">
         <div class="shop-header">
-            <h2>Garden Center</h2>
+            <h2 style="color:var(--p-leaf-lime); margin:0;">Garden Center</h2>
             <div class="shop-tabs">
                 <button class="tab-btn active" onclick="renderShopTab('plants')">Seeds</button>
                 <button class="tab-btn" onclick="renderShopTab('vines')">Vines</button>
                 <button class="tab-btn" onclick="renderShopTab('pots')">Pots</button>
             </div>
         </div>
-        <div class="selection-grid" id="shop-grid-container"></div>
-        <div class="dialog-actions"><button class="btn-secondary" onclick="document.getElementById('shop-dialog').close()">Close</button></div>
+        
+        <div class="shop-content-area" id="shop-grid-container">
+            </div>
+
+        <div class="dialog-actions">
+            <button class="btn-secondary" onclick="document.getElementById('shop-dialog').close()">Close</button>
+        </div>
     </dialog>
 
     <dialog id="premium-dialog">
-        <div class="center-text">
-            <h1 style="font-size:3rem">👑</h1>
+        <div style="text-align: center;">
+            <h1 style="font-size: 3rem; margin: 0;">👑</h1>
             <h2>Upgrade to Premium</h2>
-            <p>Sync across devices, unlock gold pots, and more!</p>
-            <button class="btn-primary full-width" onclick="startCheckout()">Subscribe - $5/mo</button>
+            <p>Unlock unlimited habits, exclusive exotic seeds, and special pots!</p>
+            <button class="premium-upgrade-btn" onclick="startCheckout()">Get Premium - $5/mo</button>
             <br><br>
-            <button class="btn-secondary" onclick="document.getElementById('premium-dialog').close()">Close</button>
+            <button class="btn-secondary" onclick="document.getElementById('premium-dialog').close()">No Thanks</button>
         </div>
     </dialog>
 
