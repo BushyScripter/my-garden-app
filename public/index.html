@@ -12,7 +12,6 @@
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
-
         gtag('config', 'G-964PQYS7CR');
     </script>
 </head>
@@ -22,33 +21,40 @@
         <div class="logo" onclick="showPage('home')">🌿 Digital Garden</div>
         <div class="header-controls">
             <button id="premium-btn" class="premium-btn-header" onclick="handlePremiumClick()">👑 Go Premium</button>
-            
             <div class="coin-display" id="coin-display">🪙 <span id="coin-count">0</span></div>
-            
             <nav class="nav-group">
                 <button class="nav-btn active" onclick="showPage('home')">Home</button>
                 <button class="nav-btn" onclick="safeNavigate('garden')">Projects</button>
                 <button class="nav-btn" onclick="safeNavigate('habits')">Habits</button>
             </nav>
-            
             <button id="account-btn" class="nav-btn account-btn" onclick="handleAccountClick()">👤 Login</button>
         </div>
     </header>
 
     <div class="scene-container">
         <div class="bg-particles-wrapper" id="bg-particles-container"></div>
+        
         <main>
             <section id="home" class="page-section active" style="justify-content:center; align-items:center;">
-                <h1 style="font-size: 5rem; text-align: center; color: transparent; background: linear-gradient(to bottom, #fff, var(--p-leaf-lime)); -webkit-background-clip: text; background-clip: text; margin-bottom: 20px;">Welcome<br>Gardener</h1>
-                <p style="color:var(--text-secondary); max-width: 400px; text-align: center; line-height: 1.6;">Track habits, grow plants, and earn coins.<br>Data is stored securely for your user account.</p>
+                <div class="hero-plant-decoration">
+                    <svg viewBox="0 0 200 200" style="width: 300px; opacity: 0.1; position:absolute; top:-50px; right: 10%;">
+                        <path d="M100,200 Q120,100 180,50" stroke="var(--p-leaf-dark)" stroke-width="5" fill="none"/>
+                        <circle cx="180" cy="50" r="20" fill="var(--p-leaf-lime)"/>
+                        <path d="M100,200 Q80,100 20,80" stroke="var(--p-leaf-dark)" stroke-width="5" fill="none"/>
+                        <circle cx="20" cy="80" r="15" fill="var(--p-leaf-mid)"/>
+                    </svg>
+                </div>
+
+                <h1 class="hero-title">Welcome<br>Gardener</h1>
+                <p class="hero-subtitle">Track habits, grow plants, and earn coins.<br>Your personal digital sanctuary.</p>
                 
-                <div style="margin-top: 30px; display:flex; gap: 15px;">
-                    <button class="tool-btn" onclick="safeAction(openShopDialog)" title="Seed Shop" style="background: var(--p-leaf-mid);">🛒</button>
+                <div style="margin-top: 30px; display:flex; gap: 15px; z-index: 10;">
+                    <button class="tool-btn" onclick="safeAction(openShopDialog)" title="Garden Center" style="background: var(--p-leaf-mid);">🛒</button>
                     <button class="tool-btn" onclick="safeNavigate('garden')" title="Go to Garden" style="background: var(--p-pot-terra);">🌱</button>
                 </div>
-                <footer style="margin-top: 50px; font-size: 0.8rem; opacity: 0.8; z-index: 9999; position: relative;">
-                    <a href="/privacy.html" target="_blank" style="color: var(--text-secondary); text-decoration: underline; margin-right: 20px;">Privacy Policy</a>
-                    <a href="#" style="color: var(--text-secondary); text-decoration: none;">Terms of Service</a>
+                
+                <footer style="margin-top: auto; font-size: 0.8rem; opacity: 0.6; padding-bottom: 20px;">
+                    <a href="/privacy.html" target="_blank" style="color: var(--text-secondary); margin-right: 20px;">Privacy Policy</a>
                 </footer>
             </section>
 
@@ -56,7 +62,7 @@
                 <div class="content-wrapper">
                     <div class="garden-toolbar">
                         <button class="tool-btn" onclick="openPlantDialog()" title="New Project">🌱</button>
-                        <button class="tool-btn" onclick="openShopDialog()" title="Seed Shop">🛒</button>
+                        <button class="tool-btn" onclick="openShopDialog()" title="Garden Center">🛒</button>
                         <button class="tool-btn" id="delete-mode-btn" onclick="toggleDeleteMode()" title="Toggle Remove Tool">🧤</button>
                     </div>
                     <div class="garden-grid" id="garden-grid-container"></div>
@@ -72,7 +78,7 @@
 
                     <div class="calendar-controls">
                         <button class="nav-arrow-btn" onclick="changeMonth(-1)">◀</button>
-                        <h2 id="calendar-month-label">December 2025</h2>
+                        <h2 id="calendar-month-label">Month Year</h2>
                         <button class="nav-arrow-btn" onclick="changeMonth(1)">▶</button>
                     </div>
 
@@ -82,7 +88,7 @@
         </main>
     </div>
 
-    <div class="ad-container" id="adsense-container"><div class="ad-placeholder">AdSense Loading...</div></div>
+    <div class="ad-container" id="adsense-container"><div class="ad-placeholder">AdSense</div></div>
 
     <dialog id="auth-dialog">
         <div class="auth-container">
@@ -97,28 +103,92 @@
         </div>
     </dialog>
 
-    <dialog id="plant-dialog">
+    <dialog id="plant-dialog" class="large-dialog">
         <form method="dialog" id="plant-form">
-            <h2 style="color:var(--p-leaf-lime); margin-top:0;">Project Details</h2>
+            <h2 style="color:var(--p-leaf-lime); margin-top:0;">New Plant Project</h2>
             <input type="hidden" id="plant-id">
-            <div class="form-group"><label>Project Name</label><input type="text" id="plant-title" required placeholder="e.g., Learn React"></div>
-            <div class="form-group"><label>Plant Type</label><div class="shop-grid" id="plant-type-selector"></div></div>
-            <div class="form-group"><label>Checklist</label><div class="checklist-add-row"><input type="text" id="new-task-input" placeholder="Add a task..."><button type="button" class="btn-small" onclick="addChecklistItem()">Add</button></div><div class="checklist-container" id="dialog-checklist"></div></div>
-            <div class="dialog-actions"><button type="button" class="btn-secondary" onclick="closePlantDialog()">Cancel</button><button type="submit" class="btn-primary">Save Plant</button></div>
+            
+            <div class="form-group">
+                <label>Project Name</label>
+                <input type="text" id="plant-title" required placeholder="e.g., Learn Spanish">
+            </div>
+
+            <div class="form-group">
+                <label>Choose Seed</label>
+                <div class="selection-grid" id="plant-type-selector"></div>
+            </div>
+            
+            <div class="form-group">
+                <label>Choose Pot Style</label>
+                <div class="selection-grid" id="plant-pot-selector"></div>
+            </div>
+
+            <div class="form-group">
+                <label>Task Type</label>
+                <div class="toggle-group">
+                    <button type="button" class="toggle-btn active" id="task-type-check" onclick="setTaskMode('checklist')">Checklist</button>
+                    <button type="button" class="toggle-btn" id="task-type-count" onclick="setTaskMode('counter')">Counter</button>
+                </div>
+            </div>
+
+            <div class="form-group" id="task-input-area">
+                </div>
+
+            <div class="dialog-actions">
+                <button type="button" class="btn-secondary" onclick="closePlantDialog()">Cancel</button>
+                <button type="submit" class="btn-primary">Plant It</button>
+            </div>
         </form>
     </dialog>
 
     <dialog id="habit-dialog">
         <form method="dialog" id="habit-form">
-            <h2 style="color:var(--f-grape); margin-top:0;">New Habit</h2>
-            <div class="form-group"><label>Habit Name</label><input type="text" id="habit-title" required placeholder="e.g., Drink Water"></div>
-            <div class="form-group"><label>Fruit Type</label><select id="habit-type"><option value="grape">Grapes (Purple)</option><option value="tomato">Tomatoes (Red)</option></select></div>
-            <div class="dialog-actions"><button type="button" class="btn-secondary" onclick="document.getElementById('habit-dialog').close()">Cancel</button><button type="submit" class="btn-primary">Plant Vine</button></div>
+            <h2 style="color:var(--f-grape); margin-top:0;">New Habit Vine</h2>
+            <div class="form-group">
+                <label>Habit Name</label>
+                <input type="text" id="habit-title" required placeholder="e.g., Drink Water">
+            </div>
+            
+            <div class="form-group">
+                <label>Choose Fruit/Flower</label>
+                <div class="selection-grid" id="habit-type-selector"></div>
+            </div>
+
+            <div class="dialog-actions">
+                <button type="button" class="btn-secondary" onclick="document.getElementById('habit-dialog').close()">Cancel</button>
+                <button type="submit" class="btn-primary">Plant Vine</button>
+            </div>
         </form>
     </dialog>
 
-    <dialog id="shop-dialog"><h2 style="color:var(--p-leaf-lime); margin-top:0;">Seed Shop</h2><p>Spend coins to unlock new plant types.</p><div class="shop-grid" id="shop-grid-container"></div><div class="dialog-actions"><button class="btn-secondary" onclick="document.getElementById('shop-dialog').close()">Close</button></div></dialog>
-    <dialog id="premium-dialog"><div style="text-align: center;"><h1 style="font-size: 3rem; margin: 0;">👑</h1><h2>Upgrade to Premium</h2><p>Unlock unlimited habits, plants, and exclusive seeds!</p><button class="premium-upgrade-btn" onclick="startCheckout()">Get Premium - $5/mo</button><br><br><button class="btn-secondary" onclick="document.getElementById('premium-dialog').close()">No Thanks</button></div></dialog>
+    <dialog id="shop-dialog" class="large-dialog">
+        <div class="shop-header">
+            <h2 style="color:var(--p-leaf-lime); margin:0;">Garden Center</h2>
+            <div class="shop-tabs">
+                <button class="tab-btn active" onclick="renderShopTab('plants')">Seeds</button>
+                <button class="tab-btn" onclick="renderShopTab('vines')">Vines</button>
+                <button class="tab-btn" onclick="renderShopTab('pots')">Pots</button>
+            </div>
+        </div>
+        
+        <div class="shop-content-area" id="shop-grid-container">
+            </div>
+
+        <div class="dialog-actions">
+            <button class="btn-secondary" onclick="document.getElementById('shop-dialog').close()">Close</button>
+        </div>
+    </dialog>
+
+    <dialog id="premium-dialog">
+        <div style="text-align: center;">
+            <h1 style="font-size: 3rem; margin: 0;">👑</h1>
+            <h2>Upgrade to Premium</h2>
+            <p>Unlock unlimited habits, exclusive exotic seeds, and special pots!</p>
+            <button class="premium-upgrade-btn" onclick="startCheckout()">Get Premium - $5/mo</button>
+            <br><br>
+            <button class="btn-secondary" onclick="document.getElementById('premium-dialog').close()">No Thanks</button>
+        </div>
+    </dialog>
 
     <script src="script.js"></script>
 </body>
