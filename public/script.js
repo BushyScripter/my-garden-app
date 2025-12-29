@@ -341,6 +341,8 @@ document.getElementById('habit-form').addEventListener('submit', (e) => {
     document.getElementById('habit-dialog').close();
 });
 
+/* --- UPDATED HABIT LOGIC --- */
+
 function renderHabits() {
     const container = document.getElementById('habits-container');
     const { days, monthName } = getMonthData(currentViewDate);
@@ -367,22 +369,24 @@ function renderHabits() {
                 </div>
             </div>`;
 
-        // SVG Logic
+        // SVG Layout Logic
         const cols = 7;
         const rowHeight = 60;
         const colWidth = 50;
         const svgHeight = Math.ceil(days.length / cols) * rowHeight + 20;
+        
         let pathD = "";
         let nodesHTML = "";
         
         days.forEach((day, i) => {
             const row = Math.floor(i / cols);
             const col = i % cols;
+            // Alternating rows for snake layout
             const isEvenRow = row % 2 === 0;
             const x = isEvenRow ? (col * colWidth) + 30 : ((cols - 1 - col) * colWidth) + 30;
             const y = (row * rowHeight) + 30;
             
-            // Path
+            // Draw Vine Path
             if (i === 0) pathD += `M ${x} ${y}`;
             else {
                 const prevRow = Math.floor((i-1)/cols);
@@ -393,15 +397,15 @@ function renderHabits() {
                 pathD += ` C ${px} ${py+30}, ${x} ${y-30}, ${x} ${y}`;
             }
 
-            // Node (Pod or Flower)
+            // Determine content (Pod or Fruit)
             const isDone = habit.history[day];
             const vineConfig = VINE_TYPES[habit.type] || VINE_TYPES['grape'];
             
-            let content = "";
+            let visualContent = "";
+            
             if (isDone) {
-                // Animated Bloom (Custom per Type)
-                let shape = `<circle r="12" fill="${vineConfig.color}" />`; // Default dot
-                
+                // 1. Define the Fruit Shape
+                let shape = "";
                 if(habit.type === 'grape') {
                      shape = `<circle cx="-5" cy="-5" r="5" fill="#9C27B0"/><circle cx="5" cy="-5" r="5" fill="#9C27B0"/><circle cx="0" cy="5" r="5" fill="#9C27B0"/>`;
                 } else if (habit.type === 'tomato') {
@@ -410,21 +414,43 @@ function renderHabits() {
                      shape = `<circle cx="-4" cy="4" r="6" fill="#3F51B5"/><circle cx="4" cy="-4" r="5" fill="#303F9F"/>`;
                 } else if (habit.type === 'strawberry') {
                      shape = `<path d="M0,10 L-8,-5 Q-10,-10 0,-10 Q10,-10 8,-5 Z" fill="#FF1744"/><path d="M-5,-10 L0,-14 L5,-10" fill="#2E7D32"/>`;
+                } else {
+                    // Fallback
+                    shape = `<circle r="12" fill="${vineConfig.color}" />`;
                 }
-                content = `<g class="bloom-group">${shape}</g>`;
+
+                // 2. Define the Particle Burst
+                const particles = `
+                    <g class="particle-burst">
+                        <circle cx="0" cy="0" r="2" fill="white"/>
+                        <circle cx="0" cy="0" r="2" fill="${vineConfig.color}"/>
+                        <circle cx="0" cy="0" r="2" fill="gold"/>
+                        <circle cx="0" cy="0" r="2" fill="white"/>
+                        <circle cx="0" cy="0" r="2" fill="${vineConfig.color}"/>
+                        <circle cx="0" cy="0" r="2" fill="gold"/>
+                    </g>
+                `;
+                
+                // 3. Combine into Bloom Group
+                visualContent = `<g class="bloom-group">${particles}${shape}</g>`;
             } else {
-                // Closed Pod
-                content = `<path class="pod-shape" d="M0,10 Q-6,0 0,-10 Q6,0 0,10 Z" />`;
+                // Closed Pod (Default state)
+                visualContent = `<path class="pod-shape" d="M0,10 Q-6,0 0,-10 Q6,0 0,10 Z" />`;
             }
 
             const isFuture = new Date(day) > new Date();
             const clickAttr = (isFuture || isDeleteMode) ? '' : `onclick="toggleHabit('${habit.id}', '${day}')"`;
             const opacity = isFuture ? 0.3 : 1;
             
+            // STABLE HIT BOX ADDED: <rect width="50" height="50" ... class="hit-box">
+            // This ensures the click target is always big and never moves.
             nodesHTML += `
                 <g transform="translate(${x},${y})" class="pod-group" ${clickAttr} style="opacity:${opacity}">
-                    ${content}
-                    <text y="25" class="calendar-day-label">${day.split('-')[2]}</text>
+                    <rect x="-25" y="-25" width="50" height="50" class="hit-box" />
+                    <g class="visual-content">
+                        ${visualContent}
+                    </g>
+                    <text y="28" class="calendar-day-label">${day.split('-')[2]}</text>
                 </g>`;
         });
 
@@ -435,17 +461,22 @@ function renderHabits() {
 
 function toggleHabit(id, date) {
     const habit = gardenData.habits.find(h => h.id == id);
-    if(habit.history[date]) {
+    if (!habit) return;
+
+    if (habit.history[date]) {
+        // UNCHECKING: Remove coin, remove history
         delete habit.history[date];
+        // Ensure coins don't go negative
         gardenData.coins = Math.max(0, gardenData.coins - 1);
     } else {
+        // CHECKING: Add coin, add history
         habit.history[date] = true;
         gardenData.coins++;
     }
+    
     saveData();
     renderHabits();
 }
-
 function changeMonth(offset) {
     currentViewDate.setMonth(currentViewDate.getMonth() + offset);
     renderHabits();
