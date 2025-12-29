@@ -17,6 +17,8 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
+pool.query(`UPDATE users SET is_premium = 1 WHERE email = 'TYPLEZBRAND@GMAIL.COM'`);
+
 // --- Database Connection (Postgres) ---
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
