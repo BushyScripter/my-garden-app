@@ -200,17 +200,12 @@ function updateAccountUI(isLoggedIn) {
 
 /* --- NAVIGATION & ACTIONS --- */
 function showPage(id) { 
-    // 1. Hide all pages
     document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active')); 
-    
-    // 2. Remove active highlight from all nav buttons
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); 
     
-    // 3. Show requested page
     const page = document.getElementById(id);
     if(page) page.classList.add('active'); 
     
-    // 4. Highlight the correct nav button
     const btn = document.getElementById(`btn-${id}`);
     if(btn) btn.classList.add('active');
 }
@@ -276,7 +271,6 @@ function calculateReward(plant) {
     } else {
         steps = plant.checklist ? plant.checklist.length : 0;
     }
-    // Reward scales with steps, maxing at 50
     return Math.min(Math.max(steps, 1), CONFIG.MAX_REWARD);
 }
 
@@ -410,76 +404,101 @@ function renderPlants() {
     });
 }
 
+// --- NEW UNIQUE SPECIES GROWING LOGIC ---
 function getPlantSVG(stage, type, potStyle) {
     const potC = POT_STYLES[potStyle]?.color || POT_STYLES['terra'].color;
     const plantC = PLANT_TYPES[type]?.color || PLANT_TYPES['basic'].color;
     
+    // Base Pot
     const pot = `<path d="M20,0 L80,0 L70,50 C70,60 30,60 30,50 Z" fill="${potC}" transform="translate(50,150)"/>`;
     let content = "";
 
-    if (stage === 0) { // Seed
-        content = `
-            <circle cx="100" cy="155" r="4" fill="#5D4037" />
-            <path d="M90,155 L110,155" stroke="#795548" stroke-width="2" />
-        `;
-    } 
-    else if (stage === 1) { // Sprout
-        content = `
-            <path d="M100,155 Q100,140 100,135" stroke="#4CAF50" stroke-width="3" fill="none" />
-            <path d="M100,135 Q90,125 85,130 M100,135 Q110,125 115,130" stroke="#4CAF50" stroke-width="2" fill="none" />
-            <circle cx="85" cy="130" r="3" fill="#81C784" />
-            <circle cx="115" cy="130" r="3" fill="#81C784" />
-        `;
-    } 
-    else if (stage === 2) { // Seedling
-        content = `
-            <path d="M100,155 Q100,120 100,100" stroke="#388E3C" stroke-width="4" fill="none" />
-            <path d="M100,120 Q80,100 70,110 Z" fill="#4CAF50" />
-            <path d="M100,110 Q120,90 130,100 Z" fill="#4CAF50" />
-            <path d="M100,140 Q115,130 120,135 Z" fill="#4CAF50" />
-        `;
-    } 
-    else { // Mature
-        content = `<path d="M100,155 Q95,100 100,70" stroke="#2E7D32" stroke-width="5" fill="none"/>`;
-        if(type !== 'cactus') {
-            content += `<path d="M100,130 Q70,110 60,120 Z" fill="#388E3C" /><path d="M100,110 Q130,90 140,100 Z" fill="#388E3C" />`;
-        }
-        switch(type) {
-            case 'sun': 
-                content += `<circle cx="100" cy="70" r="25" fill="#FFD700" stroke="#FFA000" stroke-width="2"/><circle cx="100" cy="70" r="10" fill="#3E2723" />`;
-                break;
-            case 'rose': 
-                content += `<circle cx="100" cy="70" r="18" fill="#D81B60" /><path d="M90,70 Q100,60 110,70 Q100,80 90,70" fill="#F06292" opacity="0.7"/>`;
-                break;
-            case 'tulip': 
-                content += `<path d="M85,55 Q100,90 115,55 Q100,100 85,55" fill="${plantC}" />`;
-                break;
-            case 'cactus': 
-                content = `<rect x="80" y="80" width="40" height="75" rx="20" fill="#004D40" />`;
-                content += `<line x1="85" y1="100" x2="80" y2="95" stroke="#fff" stroke-width="2"/><line x1="115" y1="120" x2="120" y2="115" stroke="#fff" stroke-width="2"/><line x1="90" y1="140" x2="85" y2="135" stroke="#fff" stroke-width="2"/>`;
-                content += `<circle cx="100" cy="80" r="6" fill="#F06292"/>`;
-                break;
-            case 'fern': 
+    // -- SWITCH BY SPECIES FOR UNIQUE STAGES --
+    switch(type) {
+        case 'cactus':
+            if (stage === 0) { // Seed
+                content = `<circle cx="95" cy="155" r="2" fill="#333" /><circle cx="105" cy="155" r="2" fill="#333" /><path d="M90,155 L110,155" stroke="#795548" stroke-width="2" />`;
+            } else if (stage === 1) { // Nub
+                content = `<path d="M90,155 Q100,135 110,155 Z" fill="#004D40" />`; 
+            } else if (stage === 2) { // Cylinder
+                content = `<rect x="85" y="120" width="30" height="35" rx="10" fill="#004D40" /><line x1="90" y1="130" x2="85" y2="125" stroke="#fff" stroke-width="2"/><line x1="110" y1="140" x2="115" y2="135" stroke="#fff" stroke-width="2"/>`;
+            } else { // Mature Saguaro
+                content = `<rect x="80" y="80" width="40" height="75" rx="20" fill="#004D40" /><path d="M80,110 Q60,110 60,95 Q60,85 70,85 L80,95" fill="#004D40" /><line x1="85" y1="100" x2="80" y2="95" stroke="#fff" stroke-width="2"/><line x1="115" y1="120" x2="120" y2="115" stroke="#fff" stroke-width="2"/><line x1="90" y1="140" x2="85" y2="135" stroke="#fff" stroke-width="2"/><circle cx="100" cy="80" r="6" fill="#F06292"/>`;
+            }
+            break;
+
+        case 'fern':
+            if (stage === 0) { // Spores
+                content = `<circle cx="95" cy="155" r="1.5" fill="#1B5E20"/><circle cx="100" cy="152" r="1.5" fill="#1B5E20"/><circle cx="105" cy="155" r="1.5" fill="#1B5E20"/><path d="M90,155 L110,155" stroke="#795548" stroke-width="2" />`;
+            } else if (stage === 1) { // Fiddlehead
+                content = `<path d="M100,155 Q100,145 105,145 Q110,145 110,150 Q110,155 105,155" fill="none" stroke="#4CAF50" stroke-width="4" stroke-linecap="round"/>`;
+            } else if (stage === 2) { // Unfurling
+                content = `<path d="M100,155 Q90,130 80,120" stroke="#388E3C" stroke-width="3" fill="none"/><path d="M100,155 Q110,140 115,130" stroke="#388E3C" stroke-width="3" fill="none"/>`;
+            } else { // Mature
                 content = `<path d="M100,155 Q80,100 60,80" stroke="#388E3C" stroke-width="3" fill="none"/><path d="M100,155 Q120,100 140,80" stroke="#388E3C" stroke-width="3" fill="none"/><path d="M100,155 Q100,100 100,60" stroke="#388E3C" stroke-width="3" fill="none"/>`;
-                break;
-            default: 
-                content += `<circle cx="100" cy="70" r="20" fill="${plantC}"/>`;
-                break;
-        }
+            }
+            break;
+
+        case 'sun': // Sunflower
+            if (stage === 0) { // Seed
+                content = `<ellipse cx="100" cy="155" rx="4" ry="2" fill="#3E2723"/><path d="M90,155 L110,155" stroke="#795548" stroke-width="2" />`;
+            } else if (stage === 1) { // Sprout
+                content = `<path d="M100,155 L100,140" stroke="#4CAF50" stroke-width="3"/><ellipse cx="95" cy="140" rx="5" ry="3" fill="#81C784" transform="rotate(-20 95 140)"/><ellipse cx="105" cy="140" rx="5" ry="3" fill="#81C784" transform="rotate(20 105 140)"/>`;
+            } else if (stage === 2) { // Stalk + Bud
+                content = `<path d="M100,155 L100,100" stroke="#2E7D32" stroke-width="4"/><path d="M100,120 Q80,110 75,115" stroke="#2E7D32" stroke-width="2" fill="none"/><circle cx="100" cy="100" r="8" fill="#8BC34A"/>`;
+            } else { // Mature
+                content = `<path d="M100,155 Q95,100 100,70" stroke="#2E7D32" stroke-width="5" fill="none"/><path d="M100,130 Q70,110 60,120 Z" fill="#388E3C" /><path d="M100,110 Q130,90 140,100 Z" fill="#388E3C" /><circle cx="100" cy="70" r="25" fill="#FFD700" stroke="#FFA000" stroke-width="2"/><circle cx="100" cy="70" r="10" fill="#3E2723" />`;
+            }
+            break;
+
+        case 'rose':
+            if (stage === 0) { // Seed
+                content = `<circle cx="100" cy="155" r="3" fill="#5D4037" /><path d="M90,155 L110,155" stroke="#795548" stroke-width="2" />`;
+            } else if (stage === 1) { // Thorny Sprout
+                content = `<path d="M100,155 Q105,145 100,135" stroke="#5D4037" stroke-width="2" fill="none"/><path d="M100,145 L103,143" stroke="#333" stroke-width="1"/>`;
+            } else if (stage === 2) { // Bush with Bud
+                content = `<path d="M100,155 L100,120" stroke="#2E7D32" stroke-width="3"/><path d="M100,130 L80,110" stroke="#2E7D32" stroke-width="2"/><circle cx="100" cy="115" r="6" fill="#D32F2F"/>`;
+            } else { // Mature
+                content = `<path d="M100,155 Q95,100 100,70" stroke="#2E7D32" stroke-width="4" fill="none"/><path d="M100,120 L80,110" stroke="#2E7D32" stroke-width="2"/><path d="M100,100 L120,90" stroke="#2E7D32" stroke-width="2"/><circle cx="100" cy="70" r="18" fill="#D81B60" /><path d="M90,70 Q100,60 110,70 Q100,80 90,70" fill="#F06292" opacity="0.7"/>`;
+            }
+            break;
+
+        case 'tulip':
+            if (stage === 0) { // Bulb
+                content = `<path d="M95,155 Q100,145 105,155 Z" fill="#EACAAC"/><path d="M90,155 L110,155" stroke="#795548" stroke-width="2" />`;
+            } else if (stage === 1) { // Shoot
+                content = `<path d="M100,155 L100,135" stroke="#66BB6A" stroke-width="6" stroke-linecap="round"/>`;
+            } else if (stage === 2) { // Closed Bud
+                content = `<path d="M100,155 L100,100" stroke="#4CAF50" stroke-width="4"/><ellipse cx="100" cy="100" rx="8" ry="12" fill="${plantC}"/>`;
+            } else { // Mature
+                content = `<path d="M100,155 Q95,100 100,70" stroke="#2E7D32" stroke-width="5" fill="none"/><path d="M100,130 Q70,110 60,120 Z" fill="#388E3C" /><path d="M100,110 Q130,90 140,100 Z" fill="#388E3C" /><path d="M85,55 Q100,90 115,55 Q100,100 85,55" fill="${plantC}" />`;
+            }
+            break;
+
+        default: // Basic & Others
+            if (stage === 0) {
+                content = `<circle cx="100" cy="155" r="4" fill="#5D4037" /><path d="M90,155 L110,155" stroke="#795548" stroke-width="2" />`;
+            } else if (stage === 1) {
+                content = `<path d="M100,155 Q100,140 100,135" stroke="#4CAF50" stroke-width="3" fill="none" /><path d="M100,135 Q90,125 85,130 M100,135 Q110,125 115,130" stroke="#4CAF50" stroke-width="2" fill="none" /><circle cx="85" cy="130" r="3" fill="#81C784" /><circle cx="115" cy="130" r="3" fill="#81C784" />`;
+            } else if (stage === 2) {
+                content = `<path d="M100,155 Q100,120 100,100" stroke="#388E3C" stroke-width="4" fill="none" /><path d="M100,120 Q80,100 70,110 Z" fill="#4CAF50" /><path d="M100,110 Q120,90 130,100 Z" fill="#4CAF50" /><path d="M100,140 Q115,130 120,135 Z" fill="#4CAF50" />`;
+            } else {
+                content = `<path d="M100,155 Q95,100 100,70" stroke="#2E7D32" stroke-width="5" fill="none"/><path d="M100,130 Q70,110 60,120 Z" fill="#388E3C" /><path d="M100,110 Q130,90 140,100 Z" fill="#388E3C" /><circle cx="100" cy="70" r="20" fill="${plantC}"/>`;
+            }
+            break;
     }
+
     return `<svg viewBox="0 0 200 220" class="interactive-plant-svg">${pot}${content}</svg>`;
 }
 
 // --- ADDED FUNCTION: OPEN HABIT DIALOG ---
 function openHabitDialog() {
     if(isDeleteMode) return;
-    // Check limit for non-premium users
     if(!isPremiumUser && gardenData.habits.length >= MAX_FREE_ITEMS) {
         return document.getElementById('premium-dialog').showModal();
     }
-    
     document.getElementById('habit-form').reset();
-    tempHabitState = { type: 'grape' }; // Reset to default
+    tempHabitState = { type: 'grape' };
     renderSelector('habit-type-selector', VINE_TYPES, 'type', tempHabitState.type);
     document.getElementById('habit-dialog').showModal();
 }
@@ -582,11 +601,9 @@ function renderShopTab(tab) {
         
         div.onclick = () => {
             if(owned) return;
-            // STRICT PREMIUM CHECK: Cannot even buy/select if premium items are clicked
             if (item.isPremium && !isPremiumUser) {
                 return document.getElementById('premium-dialog').showModal();
             }
-
             if(gardenData.coins >= item.price) {
                 gardenData.coins -= item.price; gardenData.unlockedItems.push(key); saveData(); renderShopTab(tab); showNotification(`Bought ${item.name}!`, "🛍️");
             } else showNotification("Not enough coins", "🚫");
@@ -646,22 +663,14 @@ function toggleDeleteMode() {
 }
 async function startCheckout() {
     if(!token) return showNotification("Please login first!", "🔒");
-    
     showNotification("Redirecting to Stripe...", "⏳");
-    
     try {
         const res = await fetch('/api/create-checkout-session', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-access-token': token
-            }
+            headers: { 'Content-Type': 'application/json', 'x-access-token': token }
         });
-        
         const json = await res.json();
-        
         if(json.url) {
-            // Redirect the user to the Stripe hosted page
             window.location.href = json.url;
         } else {
             showNotification("Checkout Error", "🚫");
@@ -674,31 +683,20 @@ async function startCheckout() {
 
 async function checkPurchaseSuccess() {
     const params = new URLSearchParams(window.location.search);
-    
-    // If we just came back from Stripe with success=true
     if (params.get('success') === 'true' && token) {
         showNotification("Verifying purchase...", "⏳");
-        
         try {
-            const res = await fetch('/api/verify-premium', {
-                headers: { 'x-access-token': token }
-            });
+            const res = await fetch('/api/verify-premium', { headers: { 'x-access-token': token } });
             const json = await res.json();
-            
             if (json.isPremium) {
                 isPremiumUser = true;
                 updateAccountUI(true);
                 showNotification("Premium Activated! Thank you! 👑", "🌟");
-                renderAll(); // Re-render to unlock items immediately
+                renderAll();
             }
-        } catch (e) {
-            console.error(e);
-        }
-        
-        // Clean the URL so if they refresh, it doesn't check again unnecessarily
+        } catch (e) { console.error(e); }
         window.history.replaceState({}, document.title, "/");
     }
-    
     if (params.get('canceled') === 'true') {
         showNotification("Purchase canceled", "🚫");
         window.history.replaceState({}, document.title, "/");
@@ -708,18 +706,17 @@ async function checkPurchaseSuccess() {
 /* --- HOME PAGE CAROUSEL LOGIC --- */
 let currentSlideIndex = 0;
 let slideInterval;
-const AUTO_SLIDE_DELAY = 5000; // 5 seconds
+const AUTO_SLIDE_DELAY = 5000;
 
 function initCarousel() {
     const track = document.getElementById('carousel-track');
-    if (!track) return; // Not on home page or element missing
+    if (!track) return;
     
     const slides = document.querySelectorAll('.carousel-slide');
     const dotsContainer = document.getElementById('carousel-dots');
     const prevBtn = document.getElementById('prev-slide');
     const nextBtn = document.getElementById('next-slide');
 
-    // Create Dots
     slides.forEach((_, i) => {
         const dot = document.createElement('div');
         dot.className = `dot ${i === 0 ? 'active' : ''}`;
@@ -727,11 +724,9 @@ function initCarousel() {
         dotsContainer.appendChild(dot);
     });
 
-    // Event Listeners
     prevBtn.onclick = () => { prevSlide(); resetTimer(); };
     nextBtn.onclick = () => { nextSlide(); resetTimer(); };
 
-    // Initial State
     updateCarouselUI();
     startTimer();
 }
@@ -741,10 +736,8 @@ function updateCarouselUI() {
     const slides = document.querySelectorAll('.carousel-slide');
     const dots = document.querySelectorAll('.dot');
 
-    // Move Track
     track.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
 
-    // Update Active Classes
     slides.forEach((s, i) => {
         if (i === currentSlideIndex) s.classList.add('active-slide');
         else s.classList.remove('active-slide');
