@@ -200,10 +200,21 @@ function updateAccountUI(isLoggedIn) {
 
 /* --- NAVIGATION & ACTIONS --- */
 function showPage(id) { 
+    // 1. Hide all pages
     document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active')); 
+    
+    // 2. Remove active highlight from all nav buttons
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); 
-    document.getElementById(id).classList.add('active'); 
+    
+    // 3. Show requested page
+    const page = document.getElementById(id);
+    if(page) page.classList.add('active'); 
+    
+    // 4. Highlight the correct nav button
+    const btn = document.getElementById(`btn-${id}`);
+    if(btn) btn.classList.add('active');
 }
+
 function safeNavigate(id) { showPage(id); }
 function safeAction(fn) { fn(); }
 
@@ -660,6 +671,7 @@ async function startCheckout() {
         showNotification("Connection Failed", "🚫");
     }
 }
+
 async function checkPurchaseSuccess() {
     const params = new URLSearchParams(window.location.search);
     
@@ -692,6 +704,7 @@ async function checkPurchaseSuccess() {
         window.history.replaceState({}, document.title, "/");
     }
 }
+
 /* --- HOME PAGE CAROUSEL LOGIC --- */
 let currentSlideIndex = 0;
 let slideInterval;

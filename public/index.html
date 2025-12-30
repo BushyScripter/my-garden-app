@@ -1,9 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta property="og:title" content="My Digital Garden">
-    <meta property="og:description" content="Gamify your habits and grow your digital sanctuary.">
-    <meta property="og:image" content="https://your-app-url.com/preview-image.png"> ```
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Digital Garden</title>
@@ -22,14 +19,16 @@
 
     <header>
         <div class="logo" onclick="showPage('home')">🌿 Digital Garden</div>
+
+        <nav class="nav-group">
+            <button id="btn-home" class="nav-btn active" onclick="safeNavigate('home')">Home</button>
+            <button id="btn-garden" class="nav-btn" onclick="safeNavigate('garden')">Projects</button>
+            <button id="btn-habits" class="nav-btn" onclick="safeNavigate('habits')">Habits</button>
+        </nav>
+
         <div class="header-controls">
             <button id="premium-btn" class="premium-btn-header" onclick="handlePremiumClick()">👑 Go Premium</button>
             <div class="coin-display" id="coin-display">🪙 <span id="coin-count">0</span></div>
-            <nav class="nav-group">
-                <button class="nav-btn active" onclick="showPage('home')">Home</button>
-                <button class="nav-btn" onclick="safeNavigate('garden')">Projects</button>
-                <button class="nav-btn" onclick="safeNavigate('habits')">Habits</button>
-            </nav>
             <button id="account-btn" class="nav-btn account-btn" onclick="handleAccountClick()">👤 Login</button>
         </div>
     </header>
@@ -39,10 +38,8 @@
         
         <main>
             <section id="home" class="page-section active">
-    
                 <div class="carousel-container">
                     <div class="carousel-track" id="carousel-track">
-                        
                         <div class="carousel-slide">
                             <div class="hero-plant-decoration">
                                 <svg viewBox="0 0 200 200" style="width: 200px; opacity: 0.2; margin-bottom:20px;">
@@ -56,7 +53,6 @@
                             <p class="hero-subtitle">Your personal digital sanctuary.<br>Track habits, grow plants, and find focus.</p>
                             <button class="btn-primary" onclick="safeNavigate('garden')" style="margin-top:20px; font-size:1.2rem;">Start Growing</button>
                         </div>
-
                         <div class="carousel-slide">
                             <div class="slide-icon">🌱</div>
                             <h2>Grow Projects</h2>
@@ -65,9 +61,7 @@
                                 <div class="mini-card">Checklist = Leaves 🍃</div>
                                 <div class="mini-card">Counter = Water 💧</div>
                             </div>
-                            <p class="slide-text-small">Complete tasks to evolve your plant from seed to bloom!</p>
                         </div>
-
                         <div class="carousel-slide">
                             <div class="slide-icon">🍇</div>
                             <h2>Track Habits</h2>
@@ -75,9 +69,7 @@
                             <div class="slide-visual">
                                 <div class="mini-card" style="border-color:var(--f-grape); color:var(--f-grape);">Daily Streak 🔥</div>
                             </div>
-                            <p class="slide-text-small">Every day you complete a habit, a new fruit grows on your calendar vine.</p>
                         </div>
-
                         <div class="carousel-slide">
                             <div class="slide-icon">🛒</div>
                             <h2>Earn & Customize</h2>
@@ -85,10 +77,8 @@
                             <div class="slide-visual">
                                 <div class="mini-card" style="border-color:gold; color:gold;">Earn Coins 🪙</div>
                                 <div class="mini-card">Buy Pots 🏺</div>
-                                <div class="mini-card">Exotic Seeds 🌵</div>
                             </div>
                         </div>
-
                         <div class="carousel-slide">
                             <div class="slide-icon">✨</div>
                             <h2>Ready to Start?</h2>
@@ -98,20 +88,27 @@
                                 <button class="tool-btn" onclick="safeNavigate('garden')" title="Go to Garden" style="background: var(--p-pot-terra); width:60px; height:60px;">🌱</button>
                             </div>
                         </div>
-
                     </div>
                 </div>
-
                 <div class="carousel-controls">
                     <button class="nav-arrow" id="prev-slide">❮</button>
-                    <div class="carousel-dots" id="carousel-dots">
-                        </div>
+                    <div class="carousel-dots" id="carousel-dots"></div>
                     <button class="nav-arrow" id="next-slide">❯</button>
                 </div>
-
                 <footer style="margin-top: auto; font-size: 0.8rem; opacity: 0.6; padding-bottom: 20px;">
                     <a href="/privacy.html" target="_blank" style="color: var(--text-secondary);">Privacy Policy</a>
                 </footer>
+            </section>
+
+            <section id="garden" class="page-section">
+                <div class="content-wrapper">
+                    <div class="garden-toolbar">
+                        <button class="tool-btn" onclick="openPlantDialog()" title="New Project">🌱</button>
+                        <button class="tool-btn" onclick="openShopDialog()" title="Garden Center">🛒</button>
+                        <button class="tool-btn" id="delete-mode-btn" onclick="toggleDeleteMode()" title="Toggle Remove Tool">🧤</button>
+                    </div>
+                    <div class="garden-grid" id="garden-grid-container"></div>
+                </div>
             </section>
 
             <section id="habits" class="page-section">
@@ -120,13 +117,11 @@
                         <button class="tool-btn" onclick="openHabitDialog()" title="New Habit">🍇</button>
                         <button class="tool-btn" id="delete-mode-btn-2" onclick="toggleDeleteMode()" title="Toggle Remove Tool">🧤</button>
                     </div>
-
                     <div class="calendar-controls">
                         <button class="nav-arrow-btn" onclick="changeMonth(-1)">◀</button>
                         <h2 id="calendar-month-label">Month Year</h2>
                         <button class="nav-arrow-btn" onclick="changeMonth(1)">▶</button>
                     </div>
-
                     <div class="habits-container" id="habits-container"></div>
                 </div>
             </section>            
@@ -155,33 +150,16 @@
         <form method="dialog" id="plant-form">
             <h2 style="color:var(--p-leaf-lime); margin-top:0;">New Plant Project</h2>
             <input type="hidden" id="plant-id">
-            
-            <div class="form-group">
-                <label>Project Name</label>
-                <input type="text" id="plant-title" required placeholder="e.g., Learn Spanish">
-            </div>
-
-            <div class="form-group">
-                <label>Choose Seed</label>
-                <div class="selection-grid" id="plant-type-selector"></div>
-            </div>
-            
-            <div class="form-group">
-                <label>Choose Pot Style</label>
-                <div class="selection-grid" id="plant-pot-selector"></div>
-            </div>
-
-            <div class="form-group">
-                <label>Task Type</label>
+            <div class="form-group"><label>Project Name</label><input type="text" id="plant-title" required placeholder="e.g., Learn Spanish"></div>
+            <div class="form-group"><label>Choose Seed</label><div class="selection-grid" id="plant-type-selector"></div></div>
+            <div class="form-group"><label>Choose Pot Style</label><div class="selection-grid" id="plant-pot-selector"></div></div>
+            <div class="form-group"><label>Task Type</label>
                 <div class="toggle-group">
                     <button type="button" class="toggle-btn active" id="task-type-check" onclick="setTaskMode('checklist')">Checklist</button>
                     <button type="button" class="toggle-btn" id="task-type-count" onclick="setTaskMode('counter')">Counter</button>
                 </div>
             </div>
-
-            <div class="form-group" id="task-input-area">
-                </div>
-
+            <div class="form-group" id="task-input-area"></div>
             <div class="dialog-actions">
                 <button type="button" class="btn-secondary" onclick="closePlantDialog()">Cancel</button>
                 <button type="submit" class="btn-primary">Plant It</button>
@@ -192,16 +170,8 @@
     <dialog id="habit-dialog">
         <form method="dialog" id="habit-form">
             <h2 style="color:var(--f-grape); margin-top:0;">New Habit Vine</h2>
-            <div class="form-group">
-                <label>Habit Name</label>
-                <input type="text" id="habit-title" required placeholder="e.g., Drink Water">
-            </div>
-            
-            <div class="form-group">
-                <label>Choose Fruit/Flower</label>
-                <div class="selection-grid" id="habit-type-selector"></div>
-            </div>
-
+            <div class="form-group"><label>Habit Name</label><input type="text" id="habit-title" required placeholder="e.g., Drink Water"></div>
+            <div class="form-group"><label>Choose Fruit/Flower</label><div class="selection-grid" id="habit-type-selector"></div></div>
             <div class="dialog-actions">
                 <button type="button" class="btn-secondary" onclick="document.getElementById('habit-dialog').close()">Cancel</button>
                 <button type="submit" class="btn-primary">Plant Vine</button>
@@ -218,10 +188,7 @@
                 <button class="tab-btn" onclick="renderShopTab('pots')">Pots</button>
             </div>
         </div>
-        
-        <div class="shop-content-area" id="shop-grid-container">
-            </div>
-
+        <div class="shop-content-area" id="shop-grid-container"></div>
         <div class="dialog-actions">
             <button class="btn-secondary" onclick="document.getElementById('shop-dialog').close()">Close</button>
         </div>
@@ -239,7 +206,6 @@
     </dialog>
 
     <div id="notification-container"></div>
-
     <script src="script.js"></script>
 </body>
 </html>
