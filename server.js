@@ -179,7 +179,39 @@ app.post('/api/create-checkout-session', verifyToken, async (req, res) => {
         res.status(500).json({ error: "Checkout failed" });
     }
 });
+// --- NEW ROUTE: Force Check Premium Status ---
+app.get('/api/verify-premium', verifyToken, async (req, res) => {
+    try {
+        // 1. Get user's Stripe ID
+        const result = await pool.query(`SELECT stripe_customer_id, is_premium FROM users WHERE id = $1`, [req.userId]);
+        const user = result.rows[0];
 
+        if (!user || !user.stripe_customer_id) {
+            return res.json({ isPremium: false });
+        }
+
+        // 2. Ask Stripe for active subscriptions
+        const subscriptions = await stripe.subscriptions.list({
+            customer: user.stripe_customer_id,
+            status: 'active',
+            limit: 1
+        });
+
+        const isPremium = subscriptions.data.length > 0;
+
+        // 3. Update Database if changed
+        if (!!user.is_premium !== isPremium) {
+            await pool.query(`UPDATE users SET is_premium = $1 WHERE id = $2`, [isPremium ? 1 : 0, req.userId]);
+        }
+
+        // 4. Tell Frontend
+        res.json({ isPremium: isPremium });
+
+    } catch (e) {
+        console.error("Verify Error:", e);
+        res.status(500).json({ error: "Verification failed" });
+    }
+});
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });

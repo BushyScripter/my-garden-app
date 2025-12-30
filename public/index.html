@@ -38,38 +38,80 @@
         <div class="bg-particles-wrapper" id="bg-particles-container"></div>
         
         <main>
-            <section id="home" class="page-section active" style="justify-content:center; align-items:center;">
-                <div class="hero-plant-decoration">
-                    <svg viewBox="0 0 200 200" style="width: 300px; opacity: 0.1; position:absolute; top:-50px; right: 10%;">
-                        <path d="M100,200 Q120,100 180,50" stroke="var(--p-leaf-dark)" stroke-width="5" fill="none"/>
-                        <circle cx="180" cy="50" r="20" fill="var(--p-leaf-lime)"/>
-                        <path d="M100,200 Q80,100 20,80" stroke="var(--p-leaf-dark)" stroke-width="5" fill="none"/>
-                        <circle cx="20" cy="80" r="15" fill="var(--p-leaf-mid)"/>
-                    </svg>
-                </div>
+            <section id="home" class="page-section active">
+    
+                <div class="carousel-container">
+                    <div class="carousel-track" id="carousel-track">
+                        
+                        <div class="carousel-slide">
+                            <div class="hero-plant-decoration">
+                                <svg viewBox="0 0 200 200" style="width: 200px; opacity: 0.2; margin-bottom:20px;">
+                                    <path d="M100,200 Q120,100 180,50" stroke="var(--p-leaf-dark)" stroke-width="5" fill="none"/>
+                                    <circle cx="180" cy="50" r="20" fill="var(--p-leaf-lime)"/>
+                                    <path d="M100,200 Q80,100 20,80" stroke="var(--p-leaf-dark)" stroke-width="5" fill="none"/>
+                                    <circle cx="20" cy="80" r="15" fill="var(--p-leaf-mid)"/>
+                                </svg>
+                            </div>
+                            <h1 class="hero-title">Welcome<br>Gardener</h1>
+                            <p class="hero-subtitle">Your personal digital sanctuary.<br>Track habits, grow plants, and find focus.</p>
+                            <button class="btn-primary" onclick="safeNavigate('garden')" style="margin-top:20px; font-size:1.2rem;">Start Growing</button>
+                        </div>
 
-                <h1 class="hero-title">Welcome<br>Gardener</h1>
-                <p class="hero-subtitle">Track habits, grow plants, and earn coins.<br>Your personal digital sanctuary.</p>
-                
-                <div style="margin-top: 30px; display:flex; gap: 15px; z-index: 10;">
-                    <button class="tool-btn" onclick="safeAction(openShopDialog)" title="Garden Center" style="background: var(--p-leaf-mid);">🛒</button>
-                    <button class="tool-btn" onclick="safeNavigate('garden')" title="Go to Garden" style="background: var(--p-pot-terra);">🌱</button>
-                </div>
-                
-                <footer style="margin-top: auto; font-size: 0.8rem; opacity: 0.6; padding-bottom: 20px;">
-                    <a href="/privacy.html" target="_blank" style="color: var(--text-secondary); margin-right: 20px;">Privacy Policy</a>
-                </footer>
-            </section>
+                        <div class="carousel-slide">
+                            <div class="slide-icon">🌱</div>
+                            <h2>Grow Projects</h2>
+                            <p class="slide-text">Turn your tasks into beautiful plants.</p>
+                            <div class="slide-visual">
+                                <div class="mini-card">Checklist = Leaves 🍃</div>
+                                <div class="mini-card">Counter = Water 💧</div>
+                            </div>
+                            <p class="slide-text-small">Complete tasks to evolve your plant from seed to bloom!</p>
+                        </div>
 
-            <section id="garden" class="page-section">
-                <div class="content-wrapper">
-                    <div class="garden-toolbar">
-                        <button class="tool-btn" onclick="openPlantDialog()" title="New Project">🌱</button>
-                        <button class="tool-btn" onclick="openShopDialog()" title="Garden Center">🛒</button>
-                        <button class="tool-btn" id="delete-mode-btn" onclick="toggleDeleteMode()" title="Toggle Remove Tool">🧤</button>
+                        <div class="carousel-slide">
+                            <div class="slide-icon">🍇</div>
+                            <h2>Track Habits</h2>
+                            <p class="slide-text">Build consistency with Habit Vines.</p>
+                            <div class="slide-visual">
+                                <div class="mini-card" style="border-color:var(--f-grape); color:var(--f-grape);">Daily Streak 🔥</div>
+                            </div>
+                            <p class="slide-text-small">Every day you complete a habit, a new fruit grows on your calendar vine.</p>
+                        </div>
+
+                        <div class="carousel-slide">
+                            <div class="slide-icon">🛒</div>
+                            <h2>Earn & Customize</h2>
+                            <p class="slide-text">Get rewarded for your productivity.</p>
+                            <div class="slide-visual">
+                                <div class="mini-card" style="border-color:gold; color:gold;">Earn Coins 🪙</div>
+                                <div class="mini-card">Buy Pots 🏺</div>
+                                <div class="mini-card">Exotic Seeds 🌵</div>
+                            </div>
+                        </div>
+
+                        <div class="carousel-slide">
+                            <div class="slide-icon">✨</div>
+                            <h2>Ready to Start?</h2>
+                            <p class="slide-text">Begin your gardening journey today.</p>
+                            <div style="margin-top: 30px; display:flex; gap: 15px; justify-content:center;">
+                                <button class="tool-btn" onclick="safeAction(openShopDialog)" title="Garden Center" style="background: var(--p-leaf-mid); width:60px; height:60px;">🛒</button>
+                                <button class="tool-btn" onclick="safeNavigate('garden')" title="Go to Garden" style="background: var(--p-pot-terra); width:60px; height:60px;">🌱</button>
+                            </div>
+                        </div>
+
                     </div>
-                    <div class="garden-grid" id="garden-grid-container"></div>
                 </div>
+
+                <div class="carousel-controls">
+                    <button class="nav-arrow" id="prev-slide">❮</button>
+                    <div class="carousel-dots" id="carousel-dots">
+                        </div>
+                    <button class="nav-arrow" id="next-slide">❯</button>
+                </div>
+
+                <footer style="margin-top: auto; font-size: 0.8rem; opacity: 0.6; padding-bottom: 20px;">
+                    <a href="/privacy.html" target="_blank" style="color: var(--text-secondary);">Privacy Policy</a>
+                </footer>
             </section>
 
             <section id="habits" class="page-section">

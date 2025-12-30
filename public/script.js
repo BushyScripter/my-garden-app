@@ -48,6 +48,8 @@ let tempHabitState = { type: 'grape' };
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     initAuth();
+    checkPurchaseSuccess();
+    initCarousel();
 });
 
 function setupEventListeners() {
@@ -657,4 +659,114 @@ async function startCheckout() {
         console.error(e);
         showNotification("Connection Failed", "🚫");
     }
+}
+async function checkPurchaseSuccess() {
+    const params = new URLSearchParams(window.location.search);
+    
+    // If we just came back from Stripe with success=true
+    if (params.get('success') === 'true' && token) {
+        showNotification("Verifying purchase...", "⏳");
+        
+        try {
+            const res = await fetch('/api/verify-premium', {
+                headers: { 'x-access-token': token }
+            });
+            const json = await res.json();
+            
+            if (json.isPremium) {
+                isPremiumUser = true;
+                updateAccountUI(true);
+                showNotification("Premium Activated! Thank you! 👑", "🌟");
+                renderAll(); // Re-render to unlock items immediately
+            }
+        } catch (e) {
+            console.error(e);
+        }
+        
+        // Clean the URL so if they refresh, it doesn't check again unnecessarily
+        window.history.replaceState({}, document.title, "/");
+    }
+    
+    if (params.get('canceled') === 'true') {
+        showNotification("Purchase canceled", "🚫");
+        window.history.replaceState({}, document.title, "/");
+    }
+}
+/* --- HOME PAGE CAROUSEL LOGIC --- */
+let currentSlideIndex = 0;
+let slideInterval;
+const AUTO_SLIDE_DELAY = 5000; // 5 seconds
+
+function initCarousel() {
+    const track = document.getElementById('carousel-track');
+    if (!track) return; // Not on home page or element missing
+    
+    const slides = document.querySelectorAll('.carousel-slide');
+    const dotsContainer = document.getElementById('carousel-dots');
+    const prevBtn = document.getElementById('prev-slide');
+    const nextBtn = document.getElementById('next-slide');
+
+    // Create Dots
+    slides.forEach((_, i) => {
+        const dot = document.createElement('div');
+        dot.className = `dot ${i === 0 ? 'active' : ''}`;
+        dot.onclick = () => goToSlide(i);
+        dotsContainer.appendChild(dot);
+    });
+
+    // Event Listeners
+    prevBtn.onclick = () => { prevSlide(); resetTimer(); };
+    nextBtn.onclick = () => { nextSlide(); resetTimer(); };
+
+    // Initial State
+    updateCarouselUI();
+    startTimer();
+}
+
+function updateCarouselUI() {
+    const track = document.getElementById('carousel-track');
+    const slides = document.querySelectorAll('.carousel-slide');
+    const dots = document.querySelectorAll('.dot');
+
+    // Move Track
+    track.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
+
+    // Update Active Classes
+    slides.forEach((s, i) => {
+        if (i === currentSlideIndex) s.classList.add('active-slide');
+        else s.classList.remove('active-slide');
+    });
+
+    dots.forEach((d, i) => {
+        if (i === currentSlideIndex) d.classList.add('active');
+        else d.classList.remove('active');
+    });
+}
+
+function nextSlide() {
+    const total = document.querySelectorAll('.carousel-slide').length;
+    currentSlideIndex = (currentSlideIndex + 1) % total;
+    updateCarouselUI();
+}
+
+function prevSlide() {
+    const total = document.querySelectorAll('.carousel-slide').length;
+    currentSlideIndex = (currentSlideIndex - 1 + total) % total;
+    updateCarouselUI();
+}
+
+function goToSlide(index) {
+    currentSlideIndex = index;
+    updateCarouselUI();
+    resetTimer();
+}
+
+function startTimer() {
+    clearInterval(slideInterval);
+    slideInterval = setInterval(nextSlide, AUTO_SLIDE_DELAY);
+}
+
+function resetTimer() {
+    clearInterval(slideInterval);
+    startTimer();
 }
