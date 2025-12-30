@@ -404,26 +404,48 @@ function renderPlants() {
     });
 }
 
-// --- NEW UNIQUE SPECIES GROWING LOGIC ---
+// --- REMASTERED PLANT SVG LOGIC (MORE DETAILED) ---
 function getPlantSVG(stage, type, potStyle) {
     const potC = POT_STYLES[potStyle]?.color || POT_STYLES['terra'].color;
     const plantC = PLANT_TYPES[type]?.color || PLANT_TYPES['basic'].color;
     
-    // Base Pot
-    const pot = `<path d="M20,0 L80,0 L70,50 C70,60 30,60 30,50 Z" fill="${potC}" transform="translate(50,150)"/>`;
+    // 3D Pot with Rim and Shadow
+    const pot = `
+        <defs>
+            <linearGradient id="potGrad-${potStyle}" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:${potC};stop-opacity:1" />
+                <stop offset="50%" style="stop-color:${potC};stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#3e2723;stop-opacity:0.6" />
+            </linearGradient>
+        </defs>
+        <path d="M30,50 L20,0 L80,0 L70,50 C70,60 30,60 30,50 Z" fill="url(#potGrad-${potStyle})" transform="translate(50,150)"/>
+        <rect x="68" y="150" width="64" height="10" fill="${potC}" stroke="#3e2723" stroke-width="0.5"/> `;
+    
     let content = "";
 
     // -- SWITCH BY SPECIES FOR UNIQUE STAGES --
     switch(type) {
         case 'cactus':
-            if (stage === 0) { // Seed
+            if (stage === 0) { // Seeds
                 content = `<circle cx="95" cy="155" r="2" fill="#333" /><circle cx="105" cy="155" r="2" fill="#333" /><path d="M90,155 L110,155" stroke="#795548" stroke-width="2" />`;
             } else if (stage === 1) { // Nub
-                content = `<path d="M90,155 Q100,135 110,155 Z" fill="#004D40" />`; 
+                content = `<path d="M90,155 Q100,135 110,155 Z" fill="#2E7D32" stroke="#1B5E20" />`; 
             } else if (stage === 2) { // Cylinder
-                content = `<rect x="85" y="120" width="30" height="35" rx="10" fill="#004D40" /><line x1="90" y1="130" x2="85" y2="125" stroke="#fff" stroke-width="2"/><line x1="110" y1="140" x2="115" y2="135" stroke="#fff" stroke-width="2"/>`;
+                content = `
+                    <rect x="85" y="120" width="30" height="35" rx="10" fill="#2E7D32" stroke="#1B5E20" />
+                    <line x1="92" y1="122" x2="92" y2="155" stroke="#4CAF50" stroke-width="2" opacity="0.5"/> <line x1="108" y1="122" x2="108" y2="155" stroke="#4CAF50" stroke-width="2" opacity="0.5"/> <line x1="90" y1="130" x2="85" y2="125" stroke="#fff" stroke-width="2"/><line x1="110" y1="140" x2="115" y2="135" stroke="#fff" stroke-width="2"/>
+                `;
             } else { // Mature Saguaro
-                content = `<rect x="80" y="80" width="40" height="75" rx="20" fill="#004D40" /><path d="M80,110 Q60,110 60,95 Q60,85 70,85 L80,95" fill="#004D40" /><line x1="85" y1="100" x2="80" y2="95" stroke="#fff" stroke-width="2"/><line x1="115" y1="120" x2="120" y2="115" stroke="#fff" stroke-width="2"/><line x1="90" y1="140" x2="85" y2="135" stroke="#fff" stroke-width="2"/><circle cx="100" cy="80" r="6" fill="#F06292"/>`;
+                content = `
+                    <rect x="80" y="80" width="40" height="75" rx="20" fill="#2E7D32" stroke="#1B5E20" />
+                    <path d="M80,110 Q60,110 60,95 Q60,85 70,85 L80,95" fill="#2E7D32" stroke="#1B5E20" /> <line x1="90" y1="82" x2="90" y2="155" stroke="#4CAF50" stroke-width="3" opacity="0.4"/> 
+                    <line x1="110" y1="82" x2="110" y2="155" stroke="#4CAF50" stroke-width="3" opacity="0.4"/> 
+                    <line x1="85" y1="100" x2="80" y2="95" stroke="#fff" stroke-width="2"/>
+                    <line x1="115" y1="120" x2="120" y2="115" stroke="#fff" stroke-width="2"/>
+                    <line x1="90" y1="140" x2="85" y2="135" stroke="#fff" stroke-width="2"/>
+                    <circle cx="100" cy="80" r="8" fill="#F06292" stroke="#D81B60"/>
+                    <circle cx="100" cy="80" r="3" fill="#FFE082"/>
+                `;
             }
             break;
 
@@ -433,9 +455,23 @@ function getPlantSVG(stage, type, potStyle) {
             } else if (stage === 1) { // Fiddlehead
                 content = `<path d="M100,155 Q100,145 105,145 Q110,145 110,150 Q110,155 105,155" fill="none" stroke="#4CAF50" stroke-width="4" stroke-linecap="round"/>`;
             } else if (stage === 2) { // Unfurling
-                content = `<path d="M100,155 Q90,130 80,120" stroke="#388E3C" stroke-width="3" fill="none"/><path d="M100,155 Q110,140 115,130" stroke="#388E3C" stroke-width="3" fill="none"/>`;
+                content = `
+                    <path d="M100,155 Q90,130 80,120" stroke="#388E3C" stroke-width="3" fill="none"/>
+                    <path d="M100,155 Q110,140 115,130" stroke="#388E3C" stroke-width="3" fill="none"/>
+                    <path d="M80,120 L75,115" stroke="#4CAF50" stroke-width="2"/> `;
             } else { // Mature
-                content = `<path d="M100,155 Q80,100 60,80" stroke="#388E3C" stroke-width="3" fill="none"/><path d="M100,155 Q120,100 140,80" stroke="#388E3C" stroke-width="3" fill="none"/><path d="M100,155 Q100,100 100,60" stroke="#388E3C" stroke-width="3" fill="none"/>`;
+                content = `
+                    <g stroke="#388E3C" stroke-width="2" fill="none">
+                        <path d="M100,155 Q80,100 50,90" />
+                        <path d="M100,155 Q120,100 150,90" />
+                        <path d="M100,155 Q100,100 100,60" />
+                    </g>
+                    <g fill="#4CAF50">
+                        <ellipse cx="65" cy="110" rx="20" ry="5" transform="rotate(-30 65 110)" />
+                        <ellipse cx="135" cy="110" rx="20" ry="5" transform="rotate(30 135 110)" />
+                        <ellipse cx="100" cy="80" rx="5" ry="25" />
+                    </g>
+                `;
             }
             break;
 
@@ -443,11 +479,26 @@ function getPlantSVG(stage, type, potStyle) {
             if (stage === 0) { // Seed
                 content = `<ellipse cx="100" cy="155" rx="4" ry="2" fill="#3E2723"/><path d="M90,155 L110,155" stroke="#795548" stroke-width="2" />`;
             } else if (stage === 1) { // Sprout
-                content = `<path d="M100,155 L100,140" stroke="#4CAF50" stroke-width="3"/><ellipse cx="95" cy="140" rx="5" ry="3" fill="#81C784" transform="rotate(-20 95 140)"/><ellipse cx="105" cy="140" rx="5" ry="3" fill="#81C784" transform="rotate(20 105 140)"/>`;
+                content = `<path d="M100,155 L100,140" stroke="#4CAF50" stroke-width="3"/><ellipse cx="95" cy="140" rx="6" ry="3" fill="#81C784" transform="rotate(-20 95 140)"/><ellipse cx="105" cy="140" rx="6" ry="3" fill="#81C784" transform="rotate(20 105 140)"/>`;
             } else if (stage === 2) { // Stalk + Bud
-                content = `<path d="M100,155 L100,100" stroke="#2E7D32" stroke-width="4"/><path d="M100,120 Q80,110 75,115" stroke="#2E7D32" stroke-width="2" fill="none"/><circle cx="100" cy="100" r="8" fill="#8BC34A"/>`;
+                content = `<path d="M100,155 L100,100" stroke="#2E7D32" stroke-width="4"/><path d="M100,120 Q80,110 75,115" stroke="#2E7D32" stroke-width="2" fill="none"/><circle cx="100" cy="100" r="10" fill="#8BC34A" stroke="#4CAF50"/>`;
             } else { // Mature
-                content = `<path d="M100,155 Q95,100 100,70" stroke="#2E7D32" stroke-width="5" fill="none"/><path d="M100,130 Q70,110 60,120 Z" fill="#388E3C" /><path d="M100,110 Q130,90 140,100 Z" fill="#388E3C" /><circle cx="100" cy="70" r="25" fill="#FFD700" stroke="#FFA000" stroke-width="2"/><circle cx="100" cy="70" r="10" fill="#3E2723" />`;
+                content = `
+                    <path d="M100,155 Q95,100 100,70" stroke="#2E7D32" stroke-width="5" fill="none"/>
+                    <path d="M100,130 Q70,110 60,120 Z" fill="#388E3C" />
+                    <path d="M100,110 Q130,90 140,100 Z" fill="#388E3C" />
+                    <g fill="#FFD700">
+                        <ellipse cx="100" cy="50" rx="5" ry="15" />
+                        <ellipse cx="100" cy="90" rx="5" ry="15" />
+                        <ellipse cx="80" cy="70" rx="15" ry="5" />
+                        <ellipse cx="120" cy="70" rx="15" ry="5" />
+                        <ellipse cx="86" cy="56" rx="5" ry="15" transform="rotate(-45 86 56)" />
+                        <ellipse cx="114" cy="56" rx="5" ry="15" transform="rotate(45 114 56)" />
+                        <ellipse cx="86" cy="84" rx="5" ry="15" transform="rotate(45 86 84)" />
+                        <ellipse cx="114" cy="84" rx="5" ry="15" transform="rotate(-45 114 84)" />
+                    </g>
+                    <circle cx="100" cy="70" r="12" fill="#3E2723" stroke="#5D4037" stroke-width="2"/>
+                `;
             }
             break;
 
@@ -455,27 +506,42 @@ function getPlantSVG(stage, type, potStyle) {
             if (stage === 0) { // Seed
                 content = `<circle cx="100" cy="155" r="3" fill="#5D4037" /><path d="M90,155 L110,155" stroke="#795548" stroke-width="2" />`;
             } else if (stage === 1) { // Thorny Sprout
-                content = `<path d="M100,155 Q105,145 100,135" stroke="#5D4037" stroke-width="2" fill="none"/><path d="M100,145 L103,143" stroke="#333" stroke-width="1"/>`;
+                content = `<path d="M100,155 Q105,145 100,135" stroke="#5D4037" stroke-width="2" fill="none"/><path d="M100,145 L104,142" stroke="#333" stroke-width="1"/>`;
             } else if (stage === 2) { // Bush with Bud
-                content = `<path d="M100,155 L100,120" stroke="#2E7D32" stroke-width="3"/><path d="M100,130 L80,110" stroke="#2E7D32" stroke-width="2"/><circle cx="100" cy="115" r="6" fill="#D32F2F"/>`;
+                content = `<path d="M100,155 L100,120" stroke="#2E7D32" stroke-width="3"/><path d="M100,130 L80,110" stroke="#2E7D32" stroke-width="2"/><circle cx="100" cy="115" r="7" fill="#D32F2F" stroke="#B71C1C"/>`;
             } else { // Mature
-                content = `<path d="M100,155 Q95,100 100,70" stroke="#2E7D32" stroke-width="4" fill="none"/><path d="M100,120 L80,110" stroke="#2E7D32" stroke-width="2"/><path d="M100,100 L120,90" stroke="#2E7D32" stroke-width="2"/><circle cx="100" cy="70" r="18" fill="#D81B60" /><path d="M90,70 Q100,60 110,70 Q100,80 90,70" fill="#F06292" opacity="0.7"/>`;
+                content = `
+                    <path d="M100,155 Q95,100 100,70" stroke="#2E7D32" stroke-width="4" fill="none"/>
+                    <path d="M100,120 L80,110" stroke="#2E7D32" stroke-width="2"/>
+                    <path d="M100,100 L120,90" stroke="#2E7D32" stroke-width="2"/>
+                    <path d="M100,110 L96,114" stroke="#5D4037" stroke-width="1"/> <g transform="translate(100,70)">
+                        <circle r="15" fill="#C2185B"/>
+                        <path d="M0,0 Q10,-10 0,-15 Q-10,-10 0,0" fill="#E91E63" />
+                        <path d="M0,0 Q-15,5 0,10 Q15,5 0,0" fill="#D81B60" opacity="0.8"/>
+                    </g>
+                `;
             }
             break;
 
         case 'tulip':
             if (stage === 0) { // Bulb
-                content = `<path d="M95,155 Q100,145 105,155 Z" fill="#EACAAC"/><path d="M90,155 L110,155" stroke="#795548" stroke-width="2" />`;
+                content = `<path d="M95,155 Q100,145 105,155 Z" fill="#EACAAC" stroke="#D7CCC8"/><path d="M90,155 L110,155" stroke="#795548" stroke-width="2" />`;
             } else if (stage === 1) { // Shoot
                 content = `<path d="M100,155 L100,135" stroke="#66BB6A" stroke-width="6" stroke-linecap="round"/>`;
             } else if (stage === 2) { // Closed Bud
-                content = `<path d="M100,155 L100,100" stroke="#4CAF50" stroke-width="4"/><ellipse cx="100" cy="100" rx="8" ry="12" fill="${plantC}"/>`;
+                content = `<path d="M100,155 L100,100" stroke="#4CAF50" stroke-width="4"/><ellipse cx="100" cy="100" rx="8" ry="12" fill="${plantC}" stroke="#fff" stroke-width="0.5"/>`;
             } else { // Mature
-                content = `<path d="M100,155 Q95,100 100,70" stroke="#2E7D32" stroke-width="5" fill="none"/><path d="M100,130 Q70,110 60,120 Z" fill="#388E3C" /><path d="M100,110 Q130,90 140,100 Z" fill="#388E3C" /><path d="M85,55 Q100,90 115,55 Q100,100 85,55" fill="${plantC}" />`;
+                content = `
+                    <path d="M100,155 Q95,100 100,70" stroke="#2E7D32" stroke-width="5" fill="none"/>
+                    <path d="M100,130 Q70,110 60,120 Z" fill="#388E3C" />
+                    <path d="M100,110 Q130,90 140,100 Z" fill="#388E3C" />
+                    <path d="M85,55 Q100,90 115,55 Q100,100 85,55" fill="${plantC}" stroke="#fff" stroke-width="0.5"/>
+                    <path d="M92,55 Q100,80 108,55" fill="${plantC}" filter="brightness(1.1)"/>
+                `;
             }
             break;
 
-        default: // Basic & Others
+        default: // Basic
             if (stage === 0) {
                 content = `<circle cx="100" cy="155" r="4" fill="#5D4037" /><path d="M90,155 L110,155" stroke="#795548" stroke-width="2" />`;
             } else if (stage === 1) {
@@ -483,7 +549,7 @@ function getPlantSVG(stage, type, potStyle) {
             } else if (stage === 2) {
                 content = `<path d="M100,155 Q100,120 100,100" stroke="#388E3C" stroke-width="4" fill="none" /><path d="M100,120 Q80,100 70,110 Z" fill="#4CAF50" /><path d="M100,110 Q120,90 130,100 Z" fill="#4CAF50" /><path d="M100,140 Q115,130 120,135 Z" fill="#4CAF50" />`;
             } else {
-                content = `<path d="M100,155 Q95,100 100,70" stroke="#2E7D32" stroke-width="5" fill="none"/><path d="M100,130 Q70,110 60,120 Z" fill="#388E3C" /><path d="M100,110 Q130,90 140,100 Z" fill="#388E3C" /><circle cx="100" cy="70" r="20" fill="${plantC}"/>`;
+                content = `<path d="M100,155 Q95,100 100,70" stroke="#2E7D32" stroke-width="5" fill="none"/><path d="M100,130 Q70,110 60,120 Z" fill="#388E3C" /><path d="M100,110 Q130,90 140,100 Z" fill="#388E3C" /><circle cx="100" cy="70" r="20" fill="${plantC}" stroke="#fff" stroke-width="1"/>`;
             }
             break;
     }
@@ -552,17 +618,17 @@ function getHabitFruitSVG(type, isDone) {
     let fruitContent = "";
     switch(type) {
         case 'tomato':
-            fruitContent = `<circle r="12" fill="#D50000"/><path d="M0,-10 L-4,-14 M0,-10 L4,-14 M0,-10 L0,-15" stroke="#2E7D32" stroke-width="2"/>`;
+            fruitContent = `<circle r="12" fill="#D50000"/><circle cx="4" cy="-4" r="3" fill="white" opacity="0.3"/><path d="M0,-10 L-4,-14 M0,-10 L4,-14 M0,-10 L0,-15" stroke="#2E7D32" stroke-width="2"/>`;
             break;
         case 'blueberry':
-            fruitContent = `<circle r="10" fill="#3F51B5"/><path d="M-3,-6 L3,-6 M0,-9 L0,-3" stroke="#1A237E" stroke-width="1.5"/>`;
+            fruitContent = `<circle r="10" fill="#3F51B5"/><circle cx="3" cy="-3" r="2.5" fill="white" opacity="0.3"/><path d="M-3,-6 L3,-6 M0,-9 L0,-3" stroke="#1A237E" stroke-width="1.5"/>`;
             break;
         case 'strawberry':
-            fruitContent = `<path d="M0,14 Q-12,0 -9,-10 L9,-10 Q12,0 0,14" fill="#FF1744"/><path d="M-9,-10 L0,-14 L9,-10" fill="#2E7D32"/>`;
+            fruitContent = `<path d="M0,14 Q-12,0 -9,-10 L9,-10 Q12,0 0,14" fill="#FF1744"/><circle cx="2" cy="0" r="1" fill="#FFEB3B" opacity="0.6"/><circle cx="-2" cy="5" r="1" fill="#FFEB3B" opacity="0.6"/><path d="M-9,-10 L0,-14 L9,-10" fill="#2E7D32"/>`;
             break;
         case 'grape': // Grape cluster
         default:
-            fruitContent = `<circle cx="-5" cy="-8" r="5" fill="#9C27B0"/><circle cx="5" cy="-8" r="5" fill="#9C27B0"/><circle cx="0" cy="0" r="5" fill="#9C27B0"/><circle cx="-5" cy="8" r="5" fill="#9C27B0"/><circle cx="5" cy="8" r="5" fill="#9C27B0"/><circle cx="0" cy="15" r="4" fill="#9C27B0"/>`;
+            fruitContent = `<circle cx="-5" cy="-8" r="5" fill="#9C27B0"/><circle cx="5" cy="-8" r="5" fill="#9C27B0"/><circle cx="0" cy="0" r="5" fill="#9C27B0"/><circle cx="-5" cy="8" r="5" fill="#9C27B0"/><circle cx="5" cy="8" r="5" fill="#9C27B0"/><circle cx="0" cy="15" r="4" fill="#9C27B0"/><circle cx="2" cy="2" r="2" fill="white" opacity="0.3"/>`;
             break;
     }
     
