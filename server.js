@@ -166,7 +166,7 @@ app.post('/api/create-checkout-session', verifyToken, async (req, res) => {
         const session = await stripe.checkout.sessions.create({
             customer: user.stripe_customer_id,
             line_items: [{
-                price: 'price_YOUR_ACTUAL_STRIPE_PRICE_ID', // <--- REPLACE THIS
+                price: 'price_1SjRIwJ7FqqjX2clPxgwueTu', // <--- REPLACE THIS
                 quantity: 1,
             }],
             mode: 'subscription',
