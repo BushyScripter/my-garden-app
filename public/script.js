@@ -299,7 +299,6 @@ function renderPlants() {
             if(plant.checklist.length > 0) progress = (done / plant.checklist.length) * 100;
         }
         
-        // Stage Calculation: 0=Seed, 1=Sprout, 2=Seedling, 3=Mature
         let stage = 0;
         if(progress >= 100) stage = 3;
         else if(progress >= 50) stage = 2;
@@ -308,7 +307,6 @@ function renderPlants() {
         plant.visualStage = stage;
         plant.progress = progress;
 
-        // Reward Logic
         const isCurrentlyComplete = (progress >= 100);
         const rewardAmount = calculateReward(plant);
 
@@ -317,7 +315,6 @@ function renderPlants() {
                 gardenData.coins += rewardAmount;
                 showNotification(`Complete! +${rewardAmount} Coins`, "🌟");
             } else {
-                // Prevent exploit: Deduct if they uncheck
                 gardenData.coins = Math.max(0, gardenData.coins - rewardAmount);
             }
             plant.completed = isCurrentlyComplete;
@@ -460,6 +457,19 @@ function getPlantSVG(stage, type, potStyle) {
     return `<svg viewBox="0 0 200 220" class="interactive-plant-svg">${pot}${content}</svg>`;
 }
 
+// --- ADDED FUNCTION: OPEN HABIT DIALOG ---
+function openHabitDialog() {
+    if(isDeleteMode) return;
+    // Check limit for non-premium users
+    if(!isPremiumUser && gardenData.habits.length >= MAX_FREE_ITEMS) {
+        return document.getElementById('premium-dialog').showModal();
+    }
+    
+    document.getElementById('habit-form').reset();
+    tempHabitState = { type: 'grape' }; // Reset to default
+    renderSelector('habit-type-selector', VINE_TYPES, 'type', tempHabitState.type);
+    document.getElementById('habit-dialog').showModal();
+}
 
 /* --- HABITS WITH FRUIT VISUALS --- */
 function renderHabits() {
