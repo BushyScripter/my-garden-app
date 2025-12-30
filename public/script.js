@@ -631,4 +631,30 @@ function toggleDeleteMode() {
     showNotification(isDeleteMode ? "Remove Mode ON" : "Remove Mode OFF", "🗑️");
     renderAll();
 }
-async function startCheckout() { alert("Redirecting to Stripe..."); }
+async function startCheckout() {
+    if(!token) return showNotification("Please login first!", "🔒");
+    
+    showNotification("Redirecting to Stripe...", "⏳");
+    
+    try {
+        const res = await fetch('/api/create-checkout-session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-access-token': token
+            }
+        });
+        
+        const json = await res.json();
+        
+        if(json.url) {
+            // Redirect the user to the Stripe hosted page
+            window.location.href = json.url;
+        } else {
+            showNotification("Checkout Error", "🚫");
+        }
+    } catch(e) {
+        console.error(e);
+        showNotification("Connection Failed", "🚫");
+    }
+}
