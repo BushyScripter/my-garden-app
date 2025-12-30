@@ -1,7 +1,7 @@
 /* --- CONFIGURATION & DATA MODELS --- */
 const CONFIG = {
     ADSENSE_CLIENT_ID: "ca-pub-3438241188942945",
-    COMPLETION_REWARD: 50 // Coins awarded for finishing a plant
+    MAX_REWARD: 50 // Maximum coins per task
 };
 
 const MAX_FREE_ITEMS = 3;
@@ -119,12 +119,11 @@ function handlePlantSubmit(e) {
         checklist: tempPlantState.checklist,
         counterMax: tempPlantState.counterMax,
         counterVal: tempPlantState.counterVal,
-        completed: false // Track completion for coin rewards
+        completed: false
     };
 
     if(editingPlantId) {
         const idx = gardenData.plants.findIndex(p => p.id === editingPlantId);
-        //KV: Preserve completion state if just editing details
         if(idx > -1) newPlant.completed = gardenData.plants[idx].completed; 
         gardenData.plants[idx] = newPlant;
     } else {
@@ -157,7 +156,6 @@ function showNotification(message, icon = "✨") {
     toast.className = 'garden-toast';
     toast.innerHTML = `<span style="font-size:1.2rem">${icon}</span> <span>${message}</span>`;
     
-    // Particle effects
     for(let i=0; i<8; i++) {
         const p = document.createElement('div');
         p.className = 'toast-particle';
@@ -177,7 +175,6 @@ function updateCoinDisplay() {
     const el = document.getElementById('coin-count');
     if(el) {
         el.innerText = gardenData.coins;
-        // Simple pop animation
         el.parentElement.classList.remove('coin-anim');
         void el.parentElement.offsetWidth; 
         el.parentElement.classList.add('coin-anim');
@@ -220,7 +217,6 @@ function handleAccountClick() {
 function toggleAuthMode() { alert("Use API endpoints to register."); }
 function continueAsGuest() { document.getElementById('auth-dialog').close(); }
 
-// ... [LOGIN/REGISTER FUNCTIONS REMAIN UNCHANGED - REMOVED FOR BREVITY] ... 
 async function performLogin() {
     const email = document.getElementById('auth-email').value;
     const pass = document.getElementById('auth-pass').value;
@@ -260,6 +256,17 @@ async function performRegister() {
 function renderAll() { renderPlants(); renderHabits(); }
 
 // --- PLANT LOGIC ---
+function calculateReward(plant) {
+    let steps = 0;
+    if (plant.taskMode === 'counter') {
+        steps = plant.counterMax;
+    } else {
+        steps = plant.checklist ? plant.checklist.length : 0;
+    }
+    // Reward scales with steps, maxing at 50
+    return Math.min(Math.max(steps, 1), CONFIG.MAX_REWARD);
+}
+
 function openPlantDialog(id=null) {
     if(isDeleteMode) return;
     if(!isPremiumUser && !id && gardenData.plants.length >= MAX_FREE_ITEMS) return document.getElementById('premium-dialog').showModal();
@@ -282,11 +289,9 @@ function renderPlants() {
     const container = document.getElementById('garden-grid-container');
     container.innerHTML = '';
     
-    // Check completion states and award/remove coins BEFORE rendering
     gardenData.plants.forEach(plant => {
         let progress = 0;
         
-        // Calculate Percentage
         if(plant.taskMode === 'counter') {
             if(plant.counterMax > 0) progress = (plant.counterVal / plant.counterMax) * 100;
         } else {
@@ -294,37 +299,32 @@ function renderPlants() {
             if(plant.checklist.length > 0) progress = (done / plant.checklist.length) * 100;
         }
         
-        // Determine Stage (0-3)
-        // 0: Seed (0-24%), 1: Sprout (25-49%), 2: Seedling (50-99%), 3: Plant (100%)
+        // Stage Calculation: 0=Seed, 1=Sprout, 2=Seedling, 3=Mature
         let stage = 0;
         if(progress >= 100) stage = 3;
         else if(progress >= 50) stage = 2;
         else if(progress >= 25) stage = 1;
         
-        // Store visual stage
         plant.visualStage = stage;
         plant.progress = progress;
 
-        // Coin & Completion Logic
+        // Reward Logic
         const isCurrentlyComplete = (progress >= 100);
-        
-        // If state changed:
+        const rewardAmount = calculateReward(plant);
+
         if (!!plant.completed !== isCurrentlyComplete) {
             if (isCurrentlyComplete) {
-                // Just Finished
-                gardenData.coins += CONFIG.COMPLETION_REWARD;
-                showNotification(`Task Complete! +${CONFIG.COMPLETION_REWARD} Coins`, "🌟");
+                gardenData.coins += rewardAmount;
+                showNotification(`Complete! +${rewardAmount} Coins`, "🌟");
             } else {
-                // Was complete, now incomplete (User unchecked item)
-                // Deduct coins to prevent exploit
-                gardenData.coins -= CONFIG.COMPLETION_REWARD; 
+                // Prevent exploit: Deduct if they uncheck
+                gardenData.coins = Math.max(0, gardenData.coins - rewardAmount);
             }
             plant.completed = isCurrentlyComplete;
             saveData();
         }
     });
 
-    // Render DOM
     gardenData.plants.forEach(plant => {
         let label = "";
         if(plant.taskMode === 'counter') {
@@ -337,7 +337,6 @@ function renderPlants() {
         const card = document.createElement('div');
         card.className = 'potted-plant-card';
         
-        // Mobile Fix: Ensure click area is easy to hit
         const clickArea = document.createElement('div');
         clickArea.className = 'plant-click-area';
         clickArea.onclick = () => {
@@ -350,26 +349,24 @@ function renderPlants() {
             } else openPlantDialog(plant.id);
         };
 
-        // Render SVG based on specific Stage
         const svgContent = getPlantSVG(plant.visualStage, plant.type, plant.pot);
 
         clickArea.innerHTML = `
             <div class="plant-visual-container">${svgContent}</div>
             <div class="plant-info">
-                <h3>${plant.title.replace(/</g, "&lt;")}</h3> <div class="progress-bar-container">
+                <h3>${plant.title.replace(/</g, "&lt;")}</h3>
+                <div class="progress-bar-container">
                     <div class="progress-bar-fill" style="width:${Math.min(plant.progress,100)}%; background:${plant.progress>=100?'var(--coin)':'var(--p-leaf-lime)'}"></div>
                 </div>
                 <div style="font-size:0.7rem; color:#aaa; margin-top:4px;">${label}</div>
             </div>`;
         
-        // Interactive Buttons
         let btnHTML = null;
         if(plant.taskMode === 'counter' && !isDeleteMode) {
-            // Only show button if not complete
             if (plant.counterVal < plant.counterMax) {
                 const btn = document.createElement('button');
                 btn.className = 'plant-action-btn';
-                btn.type = 'button'; // Mobile Fix: prevents form submission behavior
+                btn.type = 'button';
                 btn.innerHTML = `<span>💧</span> Grow`;
                 btn.onclick = (e) => {
                     e.stopPropagation();
@@ -403,23 +400,20 @@ function renderPlants() {
     });
 }
 
-// --- NEW SVG LOGIC: 4 STAGES ---
 function getPlantSVG(stage, type, potStyle) {
     const potC = POT_STYLES[potStyle]?.color || POT_STYLES['terra'].color;
     const plantC = PLANT_TYPES[type]?.color || PLANT_TYPES['basic'].color;
     
-    // Pot Path (Shared)
     const pot = `<path d="M20,0 L80,0 L70,50 C70,60 30,60 30,50 Z" fill="${potC}" transform="translate(50,150)"/>`;
-    
     let content = "";
 
-    // STAGE 0: SEED (0-24%)
-    if (stage === 0) {
+    if (stage === 0) { // Seed
         content = `
-            <circle cx="100" cy="155" r="4" fill="#5D4037" /> <path d="M90,155 L110,155" stroke="#795548" stroke-width="2" /> `;
+            <circle cx="100" cy="155" r="4" fill="#5D4037" />
+            <path d="M90,155 L110,155" stroke="#795548" stroke-width="2" />
+        `;
     } 
-    // STAGE 1: SPROUT (25-49%)
-    else if (stage === 1) {
+    else if (stage === 1) { // Sprout
         content = `
             <path d="M100,155 Q100,140 100,135" stroke="#4CAF50" stroke-width="3" fill="none" />
             <path d="M100,135 Q90,125 85,130 M100,135 Q110,125 115,130" stroke="#4CAF50" stroke-width="2" fill="none" />
@@ -427,8 +421,7 @@ function getPlantSVG(stage, type, potStyle) {
             <circle cx="115" cy="130" r="3" fill="#81C784" />
         `;
     } 
-    // STAGE 2: SEEDLING (50-99%)
-    else if (stage === 2) {
+    else if (stage === 2) { // Seedling
         content = `
             <path d="M100,155 Q100,120 100,100" stroke="#388E3C" stroke-width="4" fill="none" />
             <path d="M100,120 Q80,100 70,110 Z" fill="#4CAF50" />
@@ -436,54 +429,39 @@ function getPlantSVG(stage, type, potStyle) {
             <path d="M100,140 Q115,130 120,135 Z" fill="#4CAF50" />
         `;
     } 
-    // STAGE 3: MATURE (100%)
-    else {
-        // Stem
+    else { // Mature
         content = `<path d="M100,155 Q95,100 100,70" stroke="#2E7D32" stroke-width="5" fill="none"/>`;
-        
-        // Leaves (Standard base)
         if(type !== 'cactus') {
             content += `<path d="M100,130 Q70,110 60,120 Z" fill="#388E3C" /><path d="M100,110 Q130,90 140,100 Z" fill="#388E3C" />`;
         }
-
-        // Unique Flowers
         switch(type) {
-            case 'sun': // Sunflower
-                content += `<circle cx="100" cy="70" r="25" fill="#FFD700" stroke="#FFA000" stroke-width="2"/>`; // Petals
-                content += `<circle cx="100" cy="70" r="10" fill="#3E2723" />`; // Center
+            case 'sun': 
+                content += `<circle cx="100" cy="70" r="25" fill="#FFD700" stroke="#FFA000" stroke-width="2"/><circle cx="100" cy="70" r="10" fill="#3E2723" />`;
                 break;
-            case 'rose': // Rose
-                content += `<circle cx="100" cy="70" r="18" fill="#D81B60" />`;
-                content += `<path d="M90,70 Q100,60 110,70 Q100,80 90,70" fill="#F06292" opacity="0.7"/>`;
+            case 'rose': 
+                content += `<circle cx="100" cy="70" r="18" fill="#D81B60" /><path d="M90,70 Q100,60 110,70 Q100,80 90,70" fill="#F06292" opacity="0.7"/>`;
                 break;
-            case 'tulip': // Tulip
+            case 'tulip': 
                 content += `<path d="M85,55 Q100,90 115,55 Q100,100 85,55" fill="${plantC}" />`;
                 break;
-            case 'cactus': // Cactus
-                // Overwrite stem for cactus
+            case 'cactus': 
                 content = `<rect x="80" y="80" width="40" height="75" rx="20" fill="#004D40" />`;
-                content += `<line x1="85" y1="100" x2="80" y2="95" stroke="#fff" stroke-width="2"/>`;
-                content += `<line x1="115" y1="120" x2="120" y2="115" stroke="#fff" stroke-width="2"/>`;
-                content += `<line x1="90" y1="140" x2="85" y2="135" stroke="#fff" stroke-width="2"/>`;
-                // Flower on top
+                content += `<line x1="85" y1="100" x2="80" y2="95" stroke="#fff" stroke-width="2"/><line x1="115" y1="120" x2="120" y2="115" stroke="#fff" stroke-width="2"/><line x1="90" y1="140" x2="85" y2="135" stroke="#fff" stroke-width="2"/>`;
                 content += `<circle cx="100" cy="80" r="6" fill="#F06292"/>`;
                 break;
-            case 'fern': // Fern
-                content = `<path d="M100,155 Q80,100 60,80" stroke="#388E3C" stroke-width="3" fill="none"/>`;
-                content += `<path d="M100,155 Q120,100 140,80" stroke="#388E3C" stroke-width="3" fill="none"/>`;
-                content += `<path d="M100,155 Q100,100 100,60" stroke="#388E3C" stroke-width="3" fill="none"/>`;
+            case 'fern': 
+                content = `<path d="M100,155 Q80,100 60,80" stroke="#388E3C" stroke-width="3" fill="none"/><path d="M100,155 Q120,100 140,80" stroke="#388E3C" stroke-width="3" fill="none"/><path d="M100,155 Q100,100 100,60" stroke="#388E3C" stroke-width="3" fill="none"/>`;
                 break;
-            default: // Basic Leaf
+            default: 
                 content += `<circle cx="100" cy="70" r="20" fill="${plantC}"/>`;
                 break;
         }
     }
-
     return `<svg viewBox="0 0 200 220" class="interactive-plant-svg">${pot}${content}</svg>`;
 }
 
 
-/* --- HABITS & OTHER LOGIC (UNCHANGED BUT INCLUDED) --- */
+/* --- HABITS WITH FRUIT VISUALS --- */
 function renderHabits() {
     const c = document.getElementById('habits-container');
     const { days, monthName } = getMonthData(currentViewDate);
@@ -512,8 +490,7 @@ function renderHabits() {
             }
             
             const isDone = h.history[day];
-            const color = VINE_TYPES[h.type]?.color || '#9C27B0';
-            const visual = isDone ? `<g class="bloom-group"><g class="particle-burst"><circle cx="0" cy="0" r="2" fill="${color}"/><circle cx="0" cy="0" r="2" fill="gold"/></g><circle r="12" fill="${color}" stroke="white" stroke-width="1"/></g>` : `<path d="M0,10 Q-6,0 0,-10 Q6,0 0,10 Z" fill="#2E7D32" stroke="#1B5E20"/>`;
+            const visual = getHabitFruitSVG(h.type, isDone);
             const opacity = (new Date(day) > new Date()) ? 0.3 : 1;
             const click = (new Date(day) > new Date() || isDeleteMode) ? '' : `onclick="toggleHabit('${h.id}','${day}')"`;
             
@@ -525,10 +502,34 @@ function renderHabits() {
     });
 }
 
+function getHabitFruitSVG(type, isDone) {
+    if (!isDone) {
+        return `<path d="M0,10 Q-6,0 0,-10 Q6,0 0,10 Z" fill="#2E7D32" stroke="#1B5E20"/>`; // Leaf bud
+    }
+
+    let fruitContent = "";
+    switch(type) {
+        case 'tomato':
+            fruitContent = `<circle r="12" fill="#D50000"/><path d="M0,-10 L-4,-14 M0,-10 L4,-14 M0,-10 L0,-15" stroke="#2E7D32" stroke-width="2"/>`;
+            break;
+        case 'blueberry':
+            fruitContent = `<circle r="10" fill="#3F51B5"/><path d="M-3,-6 L3,-6 M0,-9 L0,-3" stroke="#1A237E" stroke-width="1.5"/>`;
+            break;
+        case 'strawberry':
+            fruitContent = `<path d="M0,14 Q-12,0 -9,-10 L9,-10 Q12,0 0,14" fill="#FF1744"/><path d="M-9,-10 L0,-14 L9,-10" fill="#2E7D32"/>`;
+            break;
+        case 'grape': // Grape cluster
+        default:
+            fruitContent = `<circle cx="-5" cy="-8" r="5" fill="#9C27B0"/><circle cx="5" cy="-8" r="5" fill="#9C27B0"/><circle cx="0" cy="0" r="5" fill="#9C27B0"/><circle cx="-5" cy="8" r="5" fill="#9C27B0"/><circle cx="5" cy="8" r="5" fill="#9C27B0"/><circle cx="0" cy="15" r="4" fill="#9C27B0"/>`;
+            break;
+    }
+    
+    return `<g class="bloom-group"><g class="particle-burst"><circle cx="0" cy="0" r="2" fill="white"/><circle cx="0" cy="0" r="2" fill="gold"/></g>${fruitContent}</g>`;
+}
+
 function toggleHabit(id, date) {
     if(isDeleteMode) return;
     const h = gardenData.habits.find(x=>x.id==id);
-    // Habit logic: +1 coin for doing it, -1 for undoing
     if(h.history[date]) { 
         delete h.history[date]; 
         if(gardenData.coins > 0) gardenData.coins--; 
@@ -541,21 +542,28 @@ function toggleHabit(id, date) {
     saveData(); renderHabits();
 }
 
-// ... [REMAINING FUNCTIONS LIKE SHOP, SELECTOR, ETC. REMAIN UNCHANGED] ...
 function openShopDialog() { renderShopTab('plants'); document.getElementById('shop-dialog').showModal(); }
 function renderShopTab(tab) {
     currentShopTab = tab;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.innerText.toLowerCase().includes(tab.slice(0,3))));
     const c = document.getElementById('shop-grid-container');
     c.innerHTML = '';
-    constBSrc = tab==='plants' ? PLANT_TYPES : (tab==='vines' ? VINE_TYPES : POT_STYLES);
-    Object.entries(constBSrc).forEach(([key, item]) => {
+    const src = tab==='plants' ? PLANT_TYPES : (tab==='vines' ? VINE_TYPES : POT_STYLES);
+    
+    Object.entries(src).forEach(([key, item]) => {
         if(item.price === 0) return;
         const owned = gardenData.unlockedItems.includes(key);
         const div = document.createElement('div');
         div.className = `select-card ${owned?'selected':''}`;
         div.innerHTML = `${item.isPremium?'<span class="premium-crown">👑</span>':''}<div class="card-icon" style="color:${item.color}">${item.icon}</div><div class="card-name">${item.name}</div>${owned?'<span>Owned</span>':`<div class="shop-price-tag">${item.price} 🪙</div>`}`;
-        if(!owned) div.onclick = () => {
+        
+        div.onclick = () => {
+            if(owned) return;
+            // STRICT PREMIUM CHECK: Cannot even buy/select if premium items are clicked
+            if (item.isPremium && !isPremiumUser) {
+                return document.getElementById('premium-dialog').showModal();
+            }
+
             if(gardenData.coins >= item.price) {
                 gardenData.coins -= item.price; gardenData.unlockedItems.push(key); saveData(); renderShopTab(tab); showNotification(`Bought ${item.name}!`, "🛍️");
             } else showNotification("Not enough coins", "🚫");
@@ -563,7 +571,7 @@ function renderShopTab(tab) {
         c.appendChild(div);
     });
 }
-// --- UTILS ---
+
 function renderSelector(id, data, key, cur) {
     const c = document.getElementById(id); c.innerHTML = '';
     Object.entries(data).forEach(([k, item]) => {
