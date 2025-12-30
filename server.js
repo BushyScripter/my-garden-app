@@ -8,7 +8,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const SECRET_KEY = process.env.JWT_SECRET || "my_super_secret_garden_key"; 
+const SECRET_KEY = process.env.JWT_SECRET; 
 
 const YOUR_DOMAIN = 'https://digitalgardentracker.com'; // Change to your actual URL
 
