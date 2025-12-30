@@ -404,150 +404,159 @@ function renderPlants() {
     });
 }
 
-// --- REMASTERED PLANT SVG LOGIC (MORE DETAILED) ---
+// --- BIOLOGICALLY ACCURATE SVG GENERATOR ---
 function getPlantSVG(stage, type, potStyle) {
     const potC = POT_STYLES[potStyle]?.color || POT_STYLES['terra'].color;
     const plantC = PLANT_TYPES[type]?.color || PLANT_TYPES['basic'].color;
     
-    // 3D Pot with Rim and Shadow
+    // Base Pot with some shading
     const pot = `
         <defs>
             <linearGradient id="potGrad-${potStyle}" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" style="stop-color:${potC};stop-opacity:1" />
-                <stop offset="50%" style="stop-color:${potC};stop-opacity:1" />
+                <stop offset="80%" style="stop-color:${potC};stop-opacity:1" />
                 <stop offset="100%" style="stop-color:#3e2723;stop-opacity:0.6" />
             </linearGradient>
         </defs>
         <path d="M30,50 L20,0 L80,0 L70,50 C70,60 30,60 30,50 Z" fill="url(#potGrad-${potStyle})" transform="translate(50,150)"/>
-        <rect x="68" y="150" width="64" height="10" fill="${potC}" stroke="#3e2723" stroke-width="0.5"/> `;
+        <rect x="68" y="150" width="64" height="8" fill="${potC}" stroke="#3e2723" stroke-width="0.5"/>
+    `;
     
     let content = "";
 
-    // -- SWITCH BY SPECIES FOR UNIQUE STAGES --
     switch(type) {
-        case 'cactus':
-            if (stage === 0) { // Seeds
-                content = `<circle cx="95" cy="155" r="2" fill="#333" /><circle cx="105" cy="155" r="2" fill="#333" /><path d="M90,155 L110,155" stroke="#795548" stroke-width="2" />`;
-            } else if (stage === 1) { // Nub
-                content = `<path d="M90,155 Q100,135 110,155 Z" fill="#2E7D32" stroke="#1B5E20" />`; 
-            } else if (stage === 2) { // Cylinder
-                content = `
-                    <rect x="85" y="120" width="30" height="35" rx="10" fill="#2E7D32" stroke="#1B5E20" />
-                    <line x1="92" y1="122" x2="92" y2="155" stroke="#4CAF50" stroke-width="2" opacity="0.5"/> <line x1="108" y1="122" x2="108" y2="155" stroke="#4CAF50" stroke-width="2" opacity="0.5"/> <line x1="90" y1="130" x2="85" y2="125" stroke="#fff" stroke-width="2"/><line x1="110" y1="140" x2="115" y2="135" stroke="#fff" stroke-width="2"/>
-                `;
-            } else { // Mature Saguaro
-                content = `
-                    <rect x="80" y="80" width="40" height="75" rx="20" fill="#2E7D32" stroke="#1B5E20" />
-                    <path d="M80,110 Q60,110 60,95 Q60,85 70,85 L80,95" fill="#2E7D32" stroke="#1B5E20" /> <line x1="90" y1="82" x2="90" y2="155" stroke="#4CAF50" stroke-width="3" opacity="0.4"/> 
-                    <line x1="110" y1="82" x2="110" y2="155" stroke="#4CAF50" stroke-width="3" opacity="0.4"/> 
-                    <line x1="85" y1="100" x2="80" y2="95" stroke="#fff" stroke-width="2"/>
-                    <line x1="115" y1="120" x2="120" y2="115" stroke="#fff" stroke-width="2"/>
-                    <line x1="90" y1="140" x2="85" y2="135" stroke="#fff" stroke-width="2"/>
-                    <circle cx="100" cy="80" r="8" fill="#F06292" stroke="#D81B60"/>
-                    <circle cx="100" cy="80" r="3" fill="#FFE082"/>
-                `;
-            }
-            break;
-
-        case 'fern':
-            if (stage === 0) { // Spores
-                content = `<circle cx="95" cy="155" r="1.5" fill="#1B5E20"/><circle cx="100" cy="152" r="1.5" fill="#1B5E20"/><circle cx="105" cy="155" r="1.5" fill="#1B5E20"/><path d="M90,155 L110,155" stroke="#795548" stroke-width="2" />`;
-            } else if (stage === 1) { // Fiddlehead
-                content = `<path d="M100,155 Q100,145 105,145 Q110,145 110,150 Q110,155 105,155" fill="none" stroke="#4CAF50" stroke-width="4" stroke-linecap="round"/>`;
-            } else if (stage === 2) { // Unfurling
-                content = `
-                    <path d="M100,155 Q90,130 80,120" stroke="#388E3C" stroke-width="3" fill="none"/>
-                    <path d="M100,155 Q110,140 115,130" stroke="#388E3C" stroke-width="3" fill="none"/>
-                    <path d="M80,120 L75,115" stroke="#4CAF50" stroke-width="2"/> `;
-            } else { // Mature
-                content = `
-                    <g stroke="#388E3C" stroke-width="2" fill="none">
-                        <path d="M100,155 Q80,100 50,90" />
-                        <path d="M100,155 Q120,100 150,90" />
-                        <path d="M100,155 Q100,100 100,60" />
-                    </g>
-                    <g fill="#4CAF50">
-                        <ellipse cx="65" cy="110" rx="20" ry="5" transform="rotate(-30 65 110)" />
-                        <ellipse cx="135" cy="110" rx="20" ry="5" transform="rotate(30 135 110)" />
-                        <ellipse cx="100" cy="80" rx="5" ry="25" />
-                    </g>
-                `;
-            }
-            break;
-
-        case 'sun': // Sunflower
-            if (stage === 0) { // Seed
-                content = `<ellipse cx="100" cy="155" rx="4" ry="2" fill="#3E2723"/><path d="M90,155 L110,155" stroke="#795548" stroke-width="2" />`;
+        /* --- SUNFLOWER: Seed -> Dicot -> Leafy Stalk -> Flower --- */
+        case 'sun':
+            if (stage === 0) { // Striped Seed
+                content = `<path d="M100,155 Q105,150 100,145 Q95,150 100,155 Z" fill="#3E2723" /><path d="M100,145 L100,155" stroke="#fff" stroke-width="0.5"/>`;
             } else if (stage === 1) { // Sprout
-                content = `<path d="M100,155 L100,140" stroke="#4CAF50" stroke-width="3"/><ellipse cx="95" cy="140" rx="6" ry="3" fill="#81C784" transform="rotate(-20 95 140)"/><ellipse cx="105" cy="140" rx="6" ry="3" fill="#81C784" transform="rotate(20 105 140)"/>`;
-            } else if (stage === 2) { // Stalk + Bud
-                content = `<path d="M100,155 L100,100" stroke="#2E7D32" stroke-width="4"/><path d="M100,120 Q80,110 75,115" stroke="#2E7D32" stroke-width="2" fill="none"/><circle cx="100" cy="100" r="10" fill="#8BC34A" stroke="#4CAF50"/>`;
-            } else { // Mature
-                content = `
-                    <path d="M100,155 Q95,100 100,70" stroke="#2E7D32" stroke-width="5" fill="none"/>
-                    <path d="M100,130 Q70,110 60,120 Z" fill="#388E3C" />
-                    <path d="M100,110 Q130,90 140,100 Z" fill="#388E3C" />
-                    <g fill="#FFD700">
-                        <ellipse cx="100" cy="50" rx="5" ry="15" />
-                        <ellipse cx="100" cy="90" rx="5" ry="15" />
-                        <ellipse cx="80" cy="70" rx="15" ry="5" />
-                        <ellipse cx="120" cy="70" rx="15" ry="5" />
-                        <ellipse cx="86" cy="56" rx="5" ry="15" transform="rotate(-45 86 56)" />
-                        <ellipse cx="114" cy="56" rx="5" ry="15" transform="rotate(45 114 56)" />
-                        <ellipse cx="86" cy="84" rx="5" ry="15" transform="rotate(45 86 84)" />
-                        <ellipse cx="114" cy="84" rx="5" ry="15" transform="rotate(-45 114 84)" />
-                    </g>
-                    <circle cx="100" cy="70" r="12" fill="#3E2723" stroke="#5D4037" stroke-width="2"/>
-                `;
+                content = `<path d="M100,155 L100,135" stroke="#8BC34A" stroke-width="3"/><ellipse cx="92" cy="135" rx="8" ry="4" fill="#8BC34A" transform="rotate(-15 92 135)"/><ellipse cx="108" cy="135" rx="8" ry="4" fill="#8BC34A" transform="rotate(15 108 135)"/>`;
+            } else if (stage === 2) { // Growing Stalk
+                content = `<path d="M100,155 Q105,120 100,90" stroke="#689F38" stroke-width="4" fill="none"/>
+                           <path d="M100,110 Q80,100 75,110 Q80,120 100,115" fill="#8BC34A"/>
+                           <path d="M100,130 Q120,120 125,130 Q120,140 100,135" fill="#8BC34A"/>
+                           <circle cx="100" cy="90" r="8" fill="#43A047"/>`;
+            } else { // Mature Sunflower
+                content = `<path d="M100,155 L100,80" stroke="#558B2F" stroke-width="5"/>
+                           <path d="M100,120 Q70,100 60,115 Q70,130 100,125" fill="#689F38"/>
+                           <path d="M100,100 Q130,80 140,95 Q130,110 100,105" fill="#689F38"/>
+                           <g transform="translate(100,60)">
+                               <circle r="30" fill="#FDD835"/> <path d="M0,0 L0,-35" stroke="#FBC02D" stroke-width="8" transform="rotate(0)"/>
+                               <path d="M0,0 L0,-35" stroke="#FBC02D" stroke-width="8" transform="rotate(45)"/>
+                               <path d="M0,0 L0,-35" stroke="#FBC02D" stroke-width="8" transform="rotate(90)"/>
+                               <path d="M0,0 L0,-35" stroke="#FBC02D" stroke-width="8" transform="rotate(135)"/>
+                               <path d="M0,0 L0,-35" stroke="#FBC02D" stroke-width="8" transform="rotate(180)"/>
+                               <path d="M0,0 L0,-35" stroke="#FBC02D" stroke-width="8" transform="rotate(225)"/>
+                               <path d="M0,0 L0,-35" stroke="#FBC02D" stroke-width="8" transform="rotate(270)"/>
+                               <path d="M0,0 L0,-35" stroke="#FBC02D" stroke-width="8" transform="rotate(315)"/>
+                               <circle r="15" fill="#3E2723"/><circle r="12" fill="none" stroke="#5D4037" stroke-dasharray="2"/>
+                           </g>`;
             }
             break;
 
+        /* --- CACTUS: Seeds -> Nub -> Cylinder -> Saguaro --- */
+        case 'cactus':
+            if (stage === 0) {
+                content = `<circle cx="90" cy="153" r="1.5" fill="#333"/><circle cx="100" cy="155" r="1.5" fill="#333"/><circle cx="110" cy="152" r="1.5" fill="#333"/><path d="M80,155 L120,155" stroke="#E0E0E0" stroke-width="2"/>`;
+            } else if (stage === 1) {
+                content = `<circle cx="100" cy="150" r="10" fill="#2E7D32" stroke="#1B5E20" stroke-width="1"/><path d="M100,140 L100,142 M95,145 L95,147 M105,145 L105,147" stroke="#fff" stroke-width="1"/>`;
+            } else if (stage === 2) {
+                content = `<path d="M90,155 L90,110 Q90,100 100,100 Q110,100 110,110 L110,155 Z" fill="#2E7D32" stroke="#1B5E20" />
+                           <line x1="95" y1="105" x2="95" y2="155" stroke="#4CAF50" stroke-width="2" opacity="0.4"/>
+                           <line x1="105" y1="105" x2="105" y2="155" stroke="#4CAF50" stroke-width="2" opacity="0.4"/>
+                           <path d="M90,120 L88,118 M110,130 L112,128 M90,140 L88,138" stroke="#fff" stroke-width="1.5"/>`;
+            } else {
+                content = `<path d="M92,155 L92,80 Q92,70 100,70 Q108,70 108,80 L108,155 Z" fill="#1B5E20" stroke="#004D40"/> <path d="M92,110 Q70,110 70,95 Q70,85 78,85 L92,95" fill="#1B5E20" stroke="#004D40"/> <path d="M108,100 Q130,100 130,85 Q130,75 122,75 L108,85" fill="#1B5E20" stroke="#004D40"/> <line x1="97" y1="75" x2="97" y2="155" stroke="#4CAF50" stroke-width="2" opacity="0.3"/>
+                           <line x1="103" y1="75" x2="103" y2="155" stroke="#4CAF50" stroke-width="2" opacity="0.3"/>
+                           <g stroke="#fff" stroke-width="1">
+                               <line x1="92" y1="90" x2="90" y2="88"/><line x1="108" y1="120" x2="110" y2="118"/>
+                               <line x1="70" y1="85" x2="68" y2="83"/><line x1="130" y1="75" x2="132" y2="73"/>
+                           </g>
+                           <circle cx="100" cy="70" r="5" fill="#F06292"/>`;
+            }
+            break;
+
+        /* --- ROSE: Hip -> Thorny Stem -> Bush -> Flower --- */
         case 'rose':
-            if (stage === 0) { // Seed
-                content = `<circle cx="100" cy="155" r="3" fill="#5D4037" /><path d="M90,155 L110,155" stroke="#795548" stroke-width="2" />`;
-            } else if (stage === 1) { // Thorny Sprout
-                content = `<path d="M100,155 Q105,145 100,135" stroke="#5D4037" stroke-width="2" fill="none"/><path d="M100,145 L104,142" stroke="#333" stroke-width="1"/>`;
-            } else if (stage === 2) { // Bush with Bud
-                content = `<path d="M100,155 L100,120" stroke="#2E7D32" stroke-width="3"/><path d="M100,130 L80,110" stroke="#2E7D32" stroke-width="2"/><circle cx="100" cy="115" r="7" fill="#D32F2F" stroke="#B71C1C"/>`;
+            if (stage === 0) { // Rose Hip
+                content = `<circle cx="100" cy="153" r="4" fill="#D84315"/><path d="M100,149 L100,147" stroke="#5D4037"/><path d="M90,155 L110,155" stroke="#795548"/>`;
+            } else if (stage === 1) { // Reddish Sprout
+                content = `<path d="M100,155 Q105,140 100,135" stroke="#8D6E63" stroke-width="2" fill="none"/>
+                           <path d="M100,145 L105,142" stroke="#5D4037" stroke-width="1"/> <path d="M100,135 Q90,130 92,125 Q95,130 100,135" fill="#4CAF50"/>`;
+            } else if (stage === 2) { // Bush
+                content = `<path d="M100,155 L100,110" stroke="#3E2723" stroke-width="3"/>
+                           <path d="M100,130 L80,115" stroke="#3E2723" stroke-width="2"/>
+                           <path d="M100,120 L120,110" stroke="#3E2723" stroke-width="2"/>
+                           <circle cx="100" cy="105" r="5" fill="#C2185B"/> <path d="M80,115 Q70,110 75,105 Q85,110 80,115" fill="#388E3C"/>
+                           <path d="M120,110 Q130,105 125,100 Q115,105 120,110" fill="#388E3C"/>`;
             } else { // Mature
-                content = `
-                    <path d="M100,155 Q95,100 100,70" stroke="#2E7D32" stroke-width="4" fill="none"/>
-                    <path d="M100,120 L80,110" stroke="#2E7D32" stroke-width="2"/>
-                    <path d="M100,100 L120,90" stroke="#2E7D32" stroke-width="2"/>
-                    <path d="M100,110 L96,114" stroke="#5D4037" stroke-width="1"/> <g transform="translate(100,70)">
-                        <circle r="15" fill="#C2185B"/>
-                        <path d="M0,0 Q10,-10 0,-15 Q-10,-10 0,0" fill="#E91E63" />
-                        <path d="M0,0 Q-15,5 0,10 Q15,5 0,0" fill="#D81B60" opacity="0.8"/>
-                    </g>
-                `;
+                content = `<path d="M100,155 L100,90" stroke="#33691E" stroke-width="3"/>
+                           <path d="M100,120 L75,110" stroke="#33691E" stroke-width="2"/>
+                           <path d="M100,140 L125,130" stroke="#33691E" stroke-width="2"/>
+                           <path d="M75,110 Q65,105 70,100 Q80,105 75,110 Z" fill="#2E7D32"/>
+                           <path d="M125,130 Q135,125 130,120 Q120,125 125,130 Z" fill="#2E7D32"/>
+                           <g transform="translate(100,80)">
+                               <circle r="18" fill="#D81B60"/>
+                               <path d="M0,-5 Q10,-15 15,0 Q5,10 0,5" fill="#F06292" opacity="0.8"/>
+                               <path d="M0,-5 Q-10,-15 -15,0 Q-5,10 0,5" fill="#AD1457" opacity="0.8"/>
+                               <path d="M0,0 Q5,-8 10,0 Q5,8 0,0" fill="#880E4F"/>
+                           </g>`;
             }
             break;
 
+        /* --- FERN: Prothallus -> Fiddlehead -> Unfurling -> Fronds --- */
+        case 'fern':
+            if (stage === 0) { // Prothallus (Heart shape)
+                content = `<path d="M95,155 Q90,150 95,148 Q100,150 100,152 Q100,150 105,148 Q110,150 105,155 Z" fill="#66BB6A"/><path d="M90,155 L110,155" stroke="#795548"/>`;
+            } else if (stage === 1) { // Fiddlehead
+                content = `<path d="M100,155 Q100,135 105,135 Q115,135 115,145 Q115,150 110,150 Q108,150 108,148" fill="none" stroke="#558B2F" stroke-width="4" stroke-linecap="round"/>`;
+            } else if (stage === 2) { // Unfurling
+                content = `<path d="M100,155 Q90,120 70,110" stroke="#4CAF50" stroke-width="2" fill="none"/>
+                           <path d="M100,155 Q110,130 120,125" stroke="#4CAF50" stroke-width="2" fill="none"/>
+                           <circle cx="70" cy="110" r="3" fill="#66BB6A"/>
+                           <circle cx="120" cy="125" r="3" fill="#66BB6A"/>`;
+            } else { // Mature
+                content = `<g stroke="#2E7D32" stroke-width="1.5" fill="none">
+                                <path d="M100,155 Q80,100 50,90" />
+                                <path d="M100,155 Q120,100 150,90" />
+                                <path d="M100,155 Q95,90 95,60" />
+                                <path d="M100,155 Q105,90 105,60" />
+                           </g>
+                           <path d="M75,120 Q65,115 75,110" fill="#4CAF50"/>
+                           <path d="M125,120 Q135,115 125,110" fill="#4CAF50"/>
+                           <path d="M95,100 Q85,95 95,90" fill="#4CAF50"/>
+                           <path d="M105,100 Q115,95 105,90" fill="#4CAF50"/>`;
+            }
+            break;
+
+        /* --- TULIP: Bulb -> Sheath -> Bud -> Flower --- */
         case 'tulip':
             if (stage === 0) { // Bulb
-                content = `<path d="M95,155 Q100,145 105,155 Z" fill="#EACAAC" stroke="#D7CCC8"/><path d="M90,155 L110,155" stroke="#795548" stroke-width="2" />`;
-            } else if (stage === 1) { // Shoot
-                content = `<path d="M100,155 L100,135" stroke="#66BB6A" stroke-width="6" stroke-linecap="round"/>`;
-            } else if (stage === 2) { // Closed Bud
-                content = `<path d="M100,155 L100,100" stroke="#4CAF50" stroke-width="4"/><ellipse cx="100" cy="100" rx="8" ry="12" fill="${plantC}" stroke="#fff" stroke-width="0.5"/>`;
+                content = `<path d="M92,155 Q88,140 100,135 Q112,140 108,155 Z" fill="#D7CCC8" stroke="#8D6E63"/><path d="M95,155 L95,160 M100,155 L100,162 M105,155 L105,160" stroke="#FFF8E1" stroke-width="1"/>`;
+            } else if (stage === 1) { // Sheath
+                content = `<path d="M100,155 L100,130" stroke="#81C784" stroke-width="8" stroke-linecap="round"/>`;
+            } else if (stage === 2) { // Leaves & Bud
+                content = `<path d="M100,155 Q85,130 80,110" fill="none" stroke="#66BB6A" stroke-width="6"/>
+                           <path d="M100,155 Q115,130 120,110" fill="none" stroke="#66BB6A" stroke-width="6"/>
+                           <path d="M100,155 L100,100" stroke="#81C784" stroke-width="4"/>
+                           <ellipse cx="100" cy="100" rx="6" ry="10" fill="${plantC}" opacity="0.7"/>`;
             } else { // Mature
-                content = `
-                    <path d="M100,155 Q95,100 100,70" stroke="#2E7D32" stroke-width="5" fill="none"/>
-                    <path d="M100,130 Q70,110 60,120 Z" fill="#388E3C" />
-                    <path d="M100,110 Q130,90 140,100 Z" fill="#388E3C" />
-                    <path d="M85,55 Q100,90 115,55 Q100,100 85,55" fill="${plantC}" stroke="#fff" stroke-width="0.5"/>
-                    <path d="M92,55 Q100,80 108,55" fill="${plantC}" filter="brightness(1.1)"/>
-                `;
+                content = `<path d="M100,155 L100,90" stroke="#4CAF50" stroke-width="5"/>
+                           <path d="M100,155 Q70,110 60,80" fill="none" stroke="#66BB6A" stroke-width="6"/>
+                           <path d="M100,155 Q130,110 140,80" fill="none" stroke="#66BB6A" stroke-width="6"/>
+                           <path d="M85,60 Q85,90 100,90 Q115,90 115,60 Q115,40 100,40 Q85,40 85,60" fill="${plantC}"/>
+                           <path d="M90,60 Q100,45 110,60" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>`;
             }
             break;
 
-        default: // Basic
+        /* --- DEFAULT: Basic Leaf --- */
+        default: 
             if (stage === 0) {
                 content = `<circle cx="100" cy="155" r="4" fill="#5D4037" /><path d="M90,155 L110,155" stroke="#795548" stroke-width="2" />`;
             } else if (stage === 1) {
-                content = `<path d="M100,155 Q100,140 100,135" stroke="#4CAF50" stroke-width="3" fill="none" /><path d="M100,135 Q90,125 85,130 M100,135 Q110,125 115,130" stroke="#4CAF50" stroke-width="2" fill="none" /><circle cx="85" cy="130" r="3" fill="#81C784" /><circle cx="115" cy="130" r="3" fill="#81C784" />`;
+                content = `<path d="M100,155 Q100,140 100,135" stroke="#4CAF50" stroke-width="3" fill="none" /><ellipse cx="92" cy="135" rx="6" ry="3" fill="#81C784" transform="rotate(-15 92 135)"/><ellipse cx="108" cy="135" rx="6" ry="3" fill="#81C784" transform="rotate(15 108 135)"/>`;
             } else if (stage === 2) {
-                content = `<path d="M100,155 Q100,120 100,100" stroke="#388E3C" stroke-width="4" fill="none" /><path d="M100,120 Q80,100 70,110 Z" fill="#4CAF50" /><path d="M100,110 Q120,90 130,100 Z" fill="#4CAF50" /><path d="M100,140 Q115,130 120,135 Z" fill="#4CAF50" />`;
+                content = `<path d="M100,155 Q100,120 100,110" stroke="#388E3C" stroke-width="4" fill="none" /><ellipse cx="85" cy="120" rx="10" ry="5" fill="#4CAF50" transform="rotate(-30 85 120)"/><ellipse cx="115" cy="110" rx="10" ry="5" fill="#4CAF50" transform="rotate(30 115 110)"/>`;
             } else {
                 content = `<path d="M100,155 Q95,100 100,70" stroke="#2E7D32" stroke-width="5" fill="none"/><path d="M100,130 Q70,110 60,120 Z" fill="#388E3C" /><path d="M100,110 Q130,90 140,100 Z" fill="#388E3C" /><circle cx="100" cy="70" r="20" fill="${plantC}" stroke="#fff" stroke-width="1"/>`;
             }
