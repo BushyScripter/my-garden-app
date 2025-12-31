@@ -26,8 +26,8 @@ const PLANT_TYPES = {
     "cactus":{ name: "Cactus",    price: 250, isPremium: false, icon: "🌵", color: "#004D40" },
     "rose":  { name: "Wild Rose", price: 400, isPremium: true,  icon: "🌹", color: "#E91E63" },
     "fern":  { name: "Fern",      price: 500, isPremium: true,  icon: "🌿", color: "#2E7D32" },
-    "bonsai":{ name: "Bonsai",    price: 500, isPremium: true,  icon: "🌳", color: "#558B2F" }, // NEW
-    "cherry":{ name: "Sakura",    price: 1000,isPremium: true,  icon: "🌸", color: "#F48FB1" } // NEW
+    "bonsai":{ name: "Bonsai",    price: 500, isPremium: true,  icon: "🌳", color: "#558B2F" }, 
+    "cherry":{ name: "Sakura",    price: 1000,isPremium: true,  icon: "🌸", color: "#F48FB1" } 
 };
 
 const VINE_TYPES = {
@@ -41,7 +41,7 @@ const POT_STYLES = {
     "terra":   { name: "Terra Cotta", price: 0,  isPremium: false, icon: "🏺", color: "#E65100" },
     "classic": { name: "Classic Blue",price: 100, isPremium: false, icon: "🔵", color: "#1E88E5" },
     "modern":  { name: "Modern Wht",  price: 200, isPremium: true,  icon: "⚪", color: "#F5F5F5" },
-    "japan":   { name: "Zen Pot",     price: 250, isPremium: true,  icon: "⛩️", color: "#3E2723" }, // NEW
+    "japan":   { name: "Zen Pot",     price: 250, isPremium: true,  icon: "⛩️", color: "#3E2723" },
     "gold":    { name: "Gold Pot",    price: 1000,isPremium: true,  icon: "👑", color: "#FFD700" }
 };
 
@@ -104,7 +104,7 @@ async function saveData() {
     
     if (token) {
         try {
-            // SECURE SYNC: We send data, but update our local coins/items based on what the server returns
+            // SECURE SYNC: Send data, update local with fixed server data
             const res = await fetch('/api/sync', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'x-access-token': token },
@@ -607,34 +607,20 @@ function getPlantSVG(stage, type, potStyle) {
 
     return `<svg viewBox="0 0 200 220" class="interactive-plant-svg">${potShape}${content}</svg>`;
 }
-/* --- MISSING HABIT FUNCTIONS --- */
 
-// This function was missing! It handles the click on a habit day.
-async function toggleHabit(id, date) {
+// --- OPEN HABIT DIALOG (Added back) ---
+function openHabitDialog() {
     if(isDeleteMode) return;
-    
-    const h = gardenData.habits.find(x => x.id == id);
-    if(!h) return;
-
-    if(h.history[date]) { 
-        // Undo: Just remove the checkmark
-        delete h.history[date]; 
-        // We generally don't deduct coins on undo to prevent confusion/bugs
+    if(!isPremiumUser && gardenData.habits.length >= MAX_FREE_ITEMS) {
+        return document.getElementById('premium-dialog').showModal();
     }
-    else { 
-        // Do: Add checkmark
-        h.history[date] = true; 
-        
-        // SECURE REWARD: Ask server for the coin
-        // The 'habit' string is just a placeholder ID for now
-        await claimReward('habit', 1); 
-    }
-    
-    saveData(); 
-    renderHabits(); // Re-render to show the new state
+    document.getElementById('habit-form').reset();
+    tempHabitState = { type: 'grape' };
+    renderSelector('habit-type-selector', VINE_TYPES, 'type', tempHabitState.type);
+    document.getElementById('habit-dialog').showModal();
 }
 
-// Just in case renderHabits was also incomplete, here is the full correct version:
+// --- RENDER HABITS (Added back) ---
 function renderHabits() {
     const c = document.getElementById('habits-container');
     const { days, monthName } = getMonthData(currentViewDate);
@@ -649,7 +635,6 @@ function renderHabits() {
     gardenData.habits.forEach(h => {
         const card = document.createElement('div');
         card.className = 'habit-calendar-card';
-        
         if(isDeleteMode) { 
             card.style.borderColor = '#ff4444'; 
             card.onclick = () => { 
@@ -678,30 +663,56 @@ function renderHabits() {
             const isDone = h.history[day];
             const visual = getHabitFruitSVG(h.type, isDone);
             const opacity = (new Date(day) > new Date()) ? 0.3 : 1;
-            
-            // Only add onclick if it's a valid date and not delete mode
             const click = (new Date(day) > new Date() || isDeleteMode) ? '' : `onclick="toggleHabit('${h.id}','${day}')"`;
             
-            nodes += `<g transform="translate(${x},${y})" class="pod-group" ${click} style="opacity:${opacity}">
-                        <rect x="-25" y="-25" width="50" height="50" class="hit-box"/>
-                        <g class="visual-content">${visual}</g>
-                        <text y="28" class="calendar-day-label">${day.split('-')[2]}</text>
-                      </g>`;
+            nodes += `<g transform="translate(${x},${y})" class="pod-group" ${click} style="opacity:${opacity}"><rect x="-25" y="-25" width="50" height="50" class="hit-box"/><g class="visual-content">${visual}</g><text y="28" class="calendar-day-label">${day.split('-')[2]}</text></g>`;
         });
         
-        card.innerHTML = `
-            <div class="habit-header">
-                <h3>${h.title.replace(/</g, "&lt;")}</h3>
-                <span class="habit-streak-badge">🔥 ${Object.keys(h.history).length}</span>
-            </div>
-            <div class="calendar-grid-container">
-                <svg class="vine-calendar-svg" viewBox="0 0 ${cols*colW+20} ${Math.ceil(days.length/cols)*rowH+20}">
-                    <path d="${pathD}" fill="none" stroke="#388E3C" stroke-width="3"/>
-                    ${nodes}
-                </svg>
-            </div>`;
+        card.innerHTML = `<div class="habit-header"><h3>${h.title.replace(/</g, "&lt;")}</h3><span class="habit-streak-badge">🔥 ${Object.keys(h.history).length}</span></div><div class="calendar-grid-container"><svg class="vine-calendar-svg" viewBox="0 0 ${cols*colW+20} ${Math.ceil(days.length/cols)*rowH+20}"><path d="${pathD}" fill="none" stroke="#388E3C" stroke-width="3"/>${nodes}</svg></div>`;
         c.appendChild(card);
     });
+}
+
+// --- HABIT VISUALS (Missing function added back) ---
+function getHabitFruitSVG(type, isDone) {
+    if (!isDone) {
+        return `<path d="M0,10 Q-6,0 0,-10 Q6,0 0,10 Z" fill="#2E7D32" stroke="#1B5E20"/>`; // Leaf bud
+    }
+
+    let fruitContent = "";
+    switch(type) {
+        case 'tomato':
+            fruitContent = `<circle r="12" fill="#D50000"/><circle cx="4" cy="-4" r="3" fill="white" opacity="0.3"/><path d="M0,-10 L-4,-14 M0,-10 L4,-14 M0,-10 L0,-15" stroke="#2E7D32" stroke-width="2"/>`;
+            break;
+        case 'blueberry':
+            fruitContent = `<circle r="10" fill="#3F51B5"/><circle cx="3" cy="-3" r="2.5" fill="white" opacity="0.3"/><path d="M-3,-6 L3,-6 M0,-9 L0,-3" stroke="#1A237E" stroke-width="1.5"/>`;
+            break;
+        case 'strawberry':
+            fruitContent = `<path d="M0,14 Q-12,0 -9,-10 L9,-10 Q12,0 0,14" fill="#FF1744"/><circle cx="2" cy="0" r="1" fill="#FFEB3B" opacity="0.6"/><circle cx="-2" cy="5" r="1" fill="#FFEB3B" opacity="0.6"/><path d="M-9,-10 L0,-14 L9,-10" fill="#2E7D32"/>`;
+            break;
+        case 'grape': 
+        default:
+            fruitContent = `<circle cx="-5" cy="-8" r="5" fill="#9C27B0"/><circle cx="5" cy="-8" r="5" fill="#9C27B0"/><circle cx="0" cy="0" r="5" fill="#9C27B0"/><circle cx="-5" cy="8" r="5" fill="#9C27B0"/><circle cx="5" cy="8" r="5" fill="#9C27B0"/><circle cx="0" cy="15" r="4" fill="#9C27B0"/><circle cx="2" cy="2" r="2" fill="white" opacity="0.3"/>`;
+            break;
+    }
+    
+    return `<g class="bloom-group"><g class="particle-burst"><circle cx="0" cy="0" r="2" fill="white"/><circle cx="0" cy="0" r="2" fill="gold"/></g>${fruitContent}</g>`;
+}
+
+// --- TOGGLE HABIT (Missing function added back) ---
+async function toggleHabit(id, date) {
+    if(isDeleteMode) return;
+    const h = gardenData.habits.find(x => x.id == id);
+    if(h.history[date]) { 
+        delete h.history[date]; 
+        // No coin deduction on undo
+    }
+    else { 
+        h.history[date] = true; 
+        await claimReward('habit', 1); 
+    }
+    saveData(); 
+    renderHabits();
 }
 
 function openShopDialog() { renderShopTab('plants'); document.getElementById('shop-dialog').showModal(); }
