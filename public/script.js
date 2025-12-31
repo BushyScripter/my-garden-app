@@ -607,6 +607,102 @@ function getPlantSVG(stage, type, potStyle) {
 
     return `<svg viewBox="0 0 200 220" class="interactive-plant-svg">${potShape}${content}</svg>`;
 }
+/* --- MISSING HABIT FUNCTIONS --- */
+
+// This function was missing! It handles the click on a habit day.
+async function toggleHabit(id, date) {
+    if(isDeleteMode) return;
+    
+    const h = gardenData.habits.find(x => x.id == id);
+    if(!h) return;
+
+    if(h.history[date]) { 
+        // Undo: Just remove the checkmark
+        delete h.history[date]; 
+        // We generally don't deduct coins on undo to prevent confusion/bugs
+    }
+    else { 
+        // Do: Add checkmark
+        h.history[date] = true; 
+        
+        // SECURE REWARD: Ask server for the coin
+        // The 'habit' string is just a placeholder ID for now
+        await claimReward('habit', 1); 
+    }
+    
+    saveData(); 
+    renderHabits(); // Re-render to show the new state
+}
+
+// Just in case renderHabits was also incomplete, here is the full correct version:
+function renderHabits() {
+    const c = document.getElementById('habits-container');
+    const { days, monthName } = getMonthData(currentViewDate);
+    document.getElementById('calendar-month-label').innerText = monthName;
+    c.innerHTML = '';
+    
+    if(!gardenData.habits.length) { 
+        c.innerHTML = `<div style="text-align:center; padding:40px; color:#aaa; background:rgba(0,0,0,0.2); border-radius:20px;">🍇<br>No habits yet.</div>`; 
+        return; 
+    }
+
+    gardenData.habits.forEach(h => {
+        const card = document.createElement('div');
+        card.className = 'habit-calendar-card';
+        
+        if(isDeleteMode) { 
+            card.style.borderColor = '#ff4444'; 
+            card.onclick = () => { 
+                if(confirm("Delete habit?")) { 
+                    gardenData.habits = gardenData.habits.filter(x=>x.id!==h.id); 
+                    saveData(); 
+                    renderHabits(); 
+                }
+            }; 
+        }
+        
+        let pathD = "", nodes = "";
+        const cols = 7, rowH = 70, colW = 50;
+        days.forEach((day, i) => {
+            const row = Math.floor(i/cols), col = i%cols;
+            const x = (row%2===0 ? col : (cols-1-col)) * colW + 30;
+            const y = row * rowH + 30;
+            
+            if(i===0) pathD += `M ${x} ${y}`;
+            else {
+                const prevRow = Math.floor((i-1)/cols);
+                const px = (prevRow%2===0 ? (i-1)%cols : (cols-1-((i-1)%cols))) * colW + 30;
+                pathD += ` C ${px} ${(prevRow*rowH)+70}, ${x} ${y-40}, ${x} ${y}`;
+            }
+            
+            const isDone = h.history[day];
+            const visual = getHabitFruitSVG(h.type, isDone);
+            const opacity = (new Date(day) > new Date()) ? 0.3 : 1;
+            
+            // Only add onclick if it's a valid date and not delete mode
+            const click = (new Date(day) > new Date() || isDeleteMode) ? '' : `onclick="toggleHabit('${h.id}','${day}')"`;
+            
+            nodes += `<g transform="translate(${x},${y})" class="pod-group" ${click} style="opacity:${opacity}">
+                        <rect x="-25" y="-25" width="50" height="50" class="hit-box"/>
+                        <g class="visual-content">${visual}</g>
+                        <text y="28" class="calendar-day-label">${day.split('-')[2]}</text>
+                      </g>`;
+        });
+        
+        card.innerHTML = `
+            <div class="habit-header">
+                <h3>${h.title.replace(/</g, "&lt;")}</h3>
+                <span class="habit-streak-badge">🔥 ${Object.keys(h.history).length}</span>
+            </div>
+            <div class="calendar-grid-container">
+                <svg class="vine-calendar-svg" viewBox="0 0 ${cols*colW+20} ${Math.ceil(days.length/cols)*rowH+20}">
+                    <path d="${pathD}" fill="none" stroke="#388E3C" stroke-width="3"/>
+                    ${nodes}
+                </svg>
+            </div>`;
+        c.appendChild(card);
+    });
+}
 
 function openShopDialog() { renderShopTab('plants'); document.getElementById('shop-dialog').showModal(); }
 function renderShopTab(tab) {
