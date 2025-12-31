@@ -18,26 +18,31 @@ let editingPlantId = null;
 let currentViewDate = new Date(); 
 let currentShopTab = 'plants';
 
-// --- VISUAL ASSETS ---
+// --- VISUAL ASSETS (UPDATED PRICES & ITEMS) ---
 const PLANT_TYPES = {
     "basic": { name: "Basic Leaf", price: 0, isPremium: false, icon: "🌱", color: "#4CAF50" },
-    "sun":   { name: "Sunflower", price: 20, isPremium: false, icon: "🌻", color: "#FFD700" },
-    "rose":  { name: "Wild Rose", price: 40, isPremium: true,  icon: "🌹", color: "#E91E63" },
-    "cactus":{ name: "Cactus",    price: 30, isPremium: false, icon: "🌵", color: "#004D40" },
-    "fern":  { name: "Fern",      price: 50, isPremium: true,  icon: "🌿", color: "#2E7D32" },
-    "tulip": { name: "Tulip",     price: 35, isPremium: false, icon: "🌷", color: "#FF69B4" }
+    "sun":   { name: "Sunflower", price: 100, isPremium: false, icon: "🌻", color: "#FFD700" },
+    "tulip": { name: "Tulip",     price: 150, isPremium: false, icon: "🌷", color: "#FF69B4" },
+    "cactus":{ name: "Cactus",    price: 250, isPremium: false, icon: "🌵", color: "#004D40" },
+    "rose":  { name: "Wild Rose", price: 400, isPremium: true,  icon: "🌹", color: "#E91E63" },
+    "fern":  { name: "Fern",      price: 500, isPremium: true,  icon: "🌿", color: "#2E7D32" },
+    "bonsai":{ name: "Bonsai",    price: 500, isPremium: true,  icon: "🌳", color: "#558B2F" }, // NEW
+    "cherry":{ name: "Sakura",    price: 1000,isPremium: true,  icon: "🌸", color: "#F48FB1" } // NEW
 };
+
 const VINE_TYPES = {
     "grape":     { name: "Grapes",     price: 0,  isPremium: false, icon: "🍇", color: "#9C27B0" },
-    "tomato":    { name: "Tomatoes",   price: 25, isPremium: false, icon: "🍅", color: "#D50000" },
-    "blueberry": { name: "Blueberry",  price: 40, isPremium: true,  icon: "🫐", color: "#3F51B5" },
-    "strawberry":{ name: "Strawberry", price: 30, isPremium: false, icon: "🍓", color: "#FF1744" }
+    "tomato":    { name: "Tomatoes",   price: 150, isPremium: false, icon: "🍅", color: "#D50000" },
+    "strawberry":{ name: "Strawberry", price: 250, isPremium: false, icon: "🍓", color: "#FF1744" },
+    "blueberry": { name: "Blueberry",  price: 400, isPremium: true,  icon: "🫐", color: "#3F51B5" }
 };
+
 const POT_STYLES = {
     "terra":   { name: "Terra Cotta", price: 0,  isPremium: false, icon: "🏺", color: "#E65100" },
-    "classic": { name: "Classic Blue",price: 15, isPremium: false, icon: "🔵", color: "#1E88E5" },
-    "modern":  { name: "Modern Wht",  price: 25, isPremium: true,  icon: "⚪", color: "#F5F5F5" },
-    "gold":    { name: "Gold Pot",    price: 100,isPremium: true,  icon: "👑", color: "#FFD700" }
+    "classic": { name: "Classic Blue",price: 100, isPremium: false, icon: "🔵", color: "#1E88E5" },
+    "modern":  { name: "Modern Wht",  price: 200, isPremium: true,  icon: "⚪", color: "#F5F5F5" },
+    "japan":   { name: "Zen Pot",     price: 250, isPremium: true,  icon: "⛩️", color: "#3E2723" }, // NEW
+    "gold":    { name: "Gold Pot",    price: 1000,isPremium: true,  icon: "👑", color: "#FFD700" }
 };
 
 let tempPlantState = { type: 'basic', pot: 'terra', mode: 'checklist', checklist: [], counterMax: 10, counterVal: 0 };
@@ -409,39 +414,106 @@ function getPlantSVG(stage, type, potStyle) {
     const potC = POT_STYLES[potStyle]?.color || POT_STYLES['terra'].color;
     const plantC = PLANT_TYPES[type]?.color || PLANT_TYPES['basic'].color;
     
-    // Base Pot with some shading
-    const pot = `
-        <defs>
-            <linearGradient id="potGrad-${potStyle}" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" style="stop-color:${potC};stop-opacity:1" />
-                <stop offset="80%" style="stop-color:${potC};stop-opacity:1" />
-                <stop offset="100%" style="stop-color:#3e2723;stop-opacity:0.6" />
-            </linearGradient>
-        </defs>
-        <path d="M30,50 L20,0 L80,0 L70,50 C70,60 30,60 30,50 Z" fill="url(#potGrad-${potStyle})" transform="translate(50,150)"/>
-        <rect x="68" y="150" width="64" height="8" fill="${potC}" stroke="#3e2723" stroke-width="0.5"/>
-    `;
+    let potShape = "";
+    
+    // Unique Pot shape for "Japanese" style
+    if(potStyle === 'japan') {
+        potShape = `
+            <defs>
+                <linearGradient id="potGrad-${potStyle}" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color:${potC};stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#1a1110;stop-opacity:0.8" />
+                </linearGradient>
+            </defs>
+            <rect x="30" y="25" width="140" height="40" fill="url(#potGrad-${potStyle})" rx="5" transform="translate(0,135)"/>
+            <rect x="40" y="65" width="15" height="10" fill="${potC}" transform="translate(0,135)"/>
+            <rect x="145" y="65" width="15" height="10" fill="${potC}" transform="translate(0,135)"/>
+            <rect x="25" y="20" width="150" height="8" fill="${potC}" stroke="#1a1110" stroke-width="0.5" transform="translate(0,135)"/>
+        `;
+    } else {
+        // Standard Tapered Pot
+        potShape = `
+            <defs>
+                <linearGradient id="potGrad-${potStyle}" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color:${potC};stop-opacity:1" />
+                    <stop offset="80%" style="stop-color:${potC};stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#3e2723;stop-opacity:0.6" />
+                </linearGradient>
+            </defs>
+            <path d="M30,50 L20,0 L80,0 L70,50 C70,60 30,60 30,50 Z" fill="url(#potGrad-${potStyle})" transform="translate(50,150)"/>
+            <rect x="68" y="150" width="64" height="8" fill="${potC}" stroke="#3e2723" stroke-width="0.5"/>
+        `;
+    }
     
     let content = "";
 
     switch(type) {
-        /* --- SUNFLOWER: Seed -> Dicot -> Leafy Stalk -> Flower --- */
+        case 'bonsai': // Bonsai Tree
+            if (stage === 0) { // Seed
+                content = `<circle cx="100" cy="155" r="3" fill="#5D4037"/><path d="M90,155 L110,155" stroke="#795548"/>`;
+            } else if (stage === 1) { // Sapling
+                content = `<path d="M100,155 Q100,135 105,130" stroke="#795548" stroke-width="4" fill="none"/>
+                           <circle cx="105" cy="130" r="8" fill="#558B2F" opacity="0.8"/>`;
+            } else if (stage === 2) { // Shaping
+                content = `<path d="M100,155 Q100,120 80,110 Q90,100 110,90" stroke="#5D4037" stroke-width="6" fill="none"/>
+                           <circle cx="80" cy="110" r="12" fill="#558B2F"/>
+                           <circle cx="110" cy="90" r="10" fill="#558B2F"/>`;
+            } else { // Mature
+                content = `<path d="M100,155 C100,140 80,140 70,120 C60,100 90,100 100,80 C110,60 140,70 150,90" stroke="#4E342E" stroke-width="12" fill="none" stroke-linecap="round"/>
+                           <circle cx="70" cy="120" r="20" fill="#33691E"/>
+                           <circle cx="100" cy="80" r="25" fill="#558B2F"/>
+                           <circle cx="150" cy="90" r="18" fill="#33691E"/>
+                           <circle cx="90" cy="130" r="15" fill="#558B2F" opacity="0.8"/>`;
+            }
+            break;
+
+        case 'cherry': // Sakura
+            if (stage === 0) { 
+                content = `<circle cx="100" cy="155" r="2" fill="#3E2723"/><path d="M90,155 L110,155" stroke="#795548"/>`;
+            } else if (stage === 1) { 
+                content = `<path d="M100,155 L100,120" stroke="#5D4037" stroke-width="3"/>
+                           <path d="M100,140 L110,130" stroke="#5D4037" stroke-width="2"/>
+                           <circle cx="110" cy="130" r="3" fill="#F8BBD0"/>`;
+            } else if (stage === 2) { 
+                content = `<path d="M100,155 L100,100" stroke="#4E342E" stroke-width="4"/>
+                           <path d="M100,130 L70,110" stroke="#4E342E" stroke-width="3"/>
+                           <path d="M100,110 L130,90" stroke="#4E342E" stroke-width="3"/>
+                           <circle cx="70" cy="110" r="8" fill="#F48FB1"/>
+                           <circle cx="130" cy="90" r="8" fill="#F48FB1"/>`;
+            } else { 
+                content = `<path d="M100,155 L100,90" stroke="#3E2723" stroke-width="6"/>
+                           <path d="M100,120 Q60,110 50,90" stroke="#3E2723" stroke-width="4" fill="none"/>
+                           <path d="M100,110 Q140,100 150,80" stroke="#3E2723" stroke-width="4" fill="none"/>
+                           <g fill="#F06292" opacity="0.9">
+                               <circle cx="50" cy="90" r="15"/>
+                               <circle cx="150" cy="80" r="15"/>
+                               <circle cx="100" cy="70" r="20"/>
+                               <circle cx="80" cy="100" r="10"/>
+                               <circle cx="120" cy="90" r="12"/>
+                               <circle cx="100" cy="50" r="15"/>
+                           </g>
+                           <circle cx="60" cy="140" r="3" fill="#F8BBD0" opacity="0.6"/> `;
+            }
+            break;
+
+        /* --- SUNFLOWER --- */
         case 'sun':
-            if (stage === 0) { // Striped Seed
+            if (stage === 0) { 
                 content = `<path d="M100,155 Q105,150 100,145 Q95,150 100,155 Z" fill="#3E2723" /><path d="M100,145 L100,155" stroke="#fff" stroke-width="0.5"/>`;
-            } else if (stage === 1) { // Sprout
+            } else if (stage === 1) { 
                 content = `<path d="M100,155 L100,135" stroke="#8BC34A" stroke-width="3"/><ellipse cx="92" cy="135" rx="8" ry="4" fill="#8BC34A" transform="rotate(-15 92 135)"/><ellipse cx="108" cy="135" rx="8" ry="4" fill="#8BC34A" transform="rotate(15 108 135)"/>`;
-            } else if (stage === 2) { // Growing Stalk
+            } else if (stage === 2) { 
                 content = `<path d="M100,155 Q105,120 100,90" stroke="#689F38" stroke-width="4" fill="none"/>
                            <path d="M100,110 Q80,100 75,110 Q80,120 100,115" fill="#8BC34A"/>
                            <path d="M100,130 Q120,120 125,130 Q120,140 100,135" fill="#8BC34A"/>
                            <circle cx="100" cy="90" r="8" fill="#43A047"/>`;
-            } else { // Mature Sunflower
+            } else { 
                 content = `<path d="M100,155 L100,80" stroke="#558B2F" stroke-width="5"/>
                            <path d="M100,120 Q70,100 60,115 Q70,130 100,125" fill="#689F38"/>
                            <path d="M100,100 Q130,80 140,95 Q130,110 100,105" fill="#689F38"/>
                            <g transform="translate(100,60)">
-                               <circle r="30" fill="#FDD835"/> <path d="M0,0 L0,-35" stroke="#FBC02D" stroke-width="8" transform="rotate(0)"/>
+                               <circle r="30" fill="#FDD835"/>
+                               <path d="M0,0 L0,-35" stroke="#FBC02D" stroke-width="8" transform="rotate(0)"/>
                                <path d="M0,0 L0,-35" stroke="#FBC02D" stroke-width="8" transform="rotate(45)"/>
                                <path d="M0,0 L0,-35" stroke="#FBC02D" stroke-width="8" transform="rotate(90)"/>
                                <path d="M0,0 L0,-35" stroke="#FBC02D" stroke-width="8" transform="rotate(135)"/>
@@ -454,7 +526,7 @@ function getPlantSVG(stage, type, potStyle) {
             }
             break;
 
-        /* --- CACTUS: Seeds -> Nub -> Cylinder -> Saguaro --- */
+        /* --- CACTUS --- */
         case 'cactus':
             if (stage === 0) {
                 content = `<circle cx="90" cy="153" r="1.5" fill="#333"/><circle cx="100" cy="155" r="1.5" fill="#333"/><circle cx="110" cy="152" r="1.5" fill="#333"/><path d="M80,155 L120,155" stroke="#E0E0E0" stroke-width="2"/>`;
@@ -466,7 +538,10 @@ function getPlantSVG(stage, type, potStyle) {
                            <line x1="105" y1="105" x2="105" y2="155" stroke="#4CAF50" stroke-width="2" opacity="0.4"/>
                            <path d="M90,120 L88,118 M110,130 L112,128 M90,140 L88,138" stroke="#fff" stroke-width="1.5"/>`;
             } else {
-                content = `<path d="M92,155 L92,80 Q92,70 100,70 Q108,70 108,80 L108,155 Z" fill="#1B5E20" stroke="#004D40"/> <path d="M92,110 Q70,110 70,95 Q70,85 78,85 L92,95" fill="#1B5E20" stroke="#004D40"/> <path d="M108,100 Q130,100 130,85 Q130,75 122,75 L108,85" fill="#1B5E20" stroke="#004D40"/> <line x1="97" y1="75" x2="97" y2="155" stroke="#4CAF50" stroke-width="2" opacity="0.3"/>
+                content = `<path d="M92,155 L92,80 Q92,70 100,70 Q108,70 108,80 L108,155 Z" fill="#1B5E20" stroke="#004D40"/>
+                           <path d="M92,110 Q70,110 70,95 Q70,85 78,85 L92,95" fill="#1B5E20" stroke="#004D40"/>
+                           <path d="M108,100 Q130,100 130,85 Q130,75 122,75 L108,85" fill="#1B5E20" stroke="#004D40"/>
+                           <line x1="97" y1="75" x2="97" y2="155" stroke="#4CAF50" stroke-width="2" opacity="0.3"/>
                            <line x1="103" y1="75" x2="103" y2="155" stroke="#4CAF50" stroke-width="2" opacity="0.3"/>
                            <g stroke="#fff" stroke-width="1">
                                <line x1="92" y1="90" x2="90" y2="88"/><line x1="108" y1="120" x2="110" y2="118"/>
@@ -476,20 +551,22 @@ function getPlantSVG(stage, type, potStyle) {
             }
             break;
 
-        /* --- ROSE: Hip -> Thorny Stem -> Bush -> Flower --- */
+        /* --- ROSE --- */
         case 'rose':
-            if (stage === 0) { // Rose Hip
+            if (stage === 0) { 
                 content = `<circle cx="100" cy="153" r="4" fill="#D84315"/><path d="M100,149 L100,147" stroke="#5D4037"/><path d="M90,155 L110,155" stroke="#795548"/>`;
-            } else if (stage === 1) { // Reddish Sprout
+            } else if (stage === 1) { 
                 content = `<path d="M100,155 Q105,140 100,135" stroke="#8D6E63" stroke-width="2" fill="none"/>
-                           <path d="M100,145 L105,142" stroke="#5D4037" stroke-width="1"/> <path d="M100,135 Q90,130 92,125 Q95,130 100,135" fill="#4CAF50"/>`;
-            } else if (stage === 2) { // Bush
+                           <path d="M100,145 L105,142" stroke="#5D4037" stroke-width="1"/>
+                           <path d="M100,135 Q90,130 92,125 Q95,130 100,135" fill="#4CAF50"/>`;
+            } else if (stage === 2) { 
                 content = `<path d="M100,155 L100,110" stroke="#3E2723" stroke-width="3"/>
                            <path d="M100,130 L80,115" stroke="#3E2723" stroke-width="2"/>
                            <path d="M100,120 L120,110" stroke="#3E2723" stroke-width="2"/>
-                           <circle cx="100" cy="105" r="5" fill="#C2185B"/> <path d="M80,115 Q70,110 75,105 Q85,110 80,115" fill="#388E3C"/>
+                           <circle cx="100" cy="105" r="5" fill="#C2185B"/>
+                           <path d="M80,115 Q70,110 75,105 Q85,110 80,115" fill="#388E3C"/>
                            <path d="M120,110 Q130,105 125,100 Q115,105 120,110" fill="#388E3C"/>`;
-            } else { // Mature
+            } else { 
                 content = `<path d="M100,155 L100,90" stroke="#33691E" stroke-width="3"/>
                            <path d="M100,120 L75,110" stroke="#33691E" stroke-width="2"/>
                            <path d="M100,140 L125,130" stroke="#33691E" stroke-width="2"/>
@@ -504,18 +581,18 @@ function getPlantSVG(stage, type, potStyle) {
             }
             break;
 
-        /* --- FERN: Prothallus -> Fiddlehead -> Unfurling -> Fronds --- */
+        /* --- FERN --- */
         case 'fern':
-            if (stage === 0) { // Prothallus (Heart shape)
+            if (stage === 0) { 
                 content = `<path d="M95,155 Q90,150 95,148 Q100,150 100,152 Q100,150 105,148 Q110,150 105,155 Z" fill="#66BB6A"/><path d="M90,155 L110,155" stroke="#795548"/>`;
-            } else if (stage === 1) { // Fiddlehead
+            } else if (stage === 1) { 
                 content = `<path d="M100,155 Q100,135 105,135 Q115,135 115,145 Q115,150 110,150 Q108,150 108,148" fill="none" stroke="#558B2F" stroke-width="4" stroke-linecap="round"/>`;
-            } else if (stage === 2) { // Unfurling
+            } else if (stage === 2) { 
                 content = `<path d="M100,155 Q90,120 70,110" stroke="#4CAF50" stroke-width="2" fill="none"/>
                            <path d="M100,155 Q110,130 120,125" stroke="#4CAF50" stroke-width="2" fill="none"/>
                            <circle cx="70" cy="110" r="3" fill="#66BB6A"/>
                            <circle cx="120" cy="125" r="3" fill="#66BB6A"/>`;
-            } else { // Mature
+            } else { 
                 content = `<g stroke="#2E7D32" stroke-width="1.5" fill="none">
                                 <path d="M100,155 Q80,100 50,90" />
                                 <path d="M100,155 Q120,100 150,90" />
@@ -529,18 +606,18 @@ function getPlantSVG(stage, type, potStyle) {
             }
             break;
 
-        /* --- TULIP: Bulb -> Sheath -> Bud -> Flower --- */
+        /* --- TULIP --- */
         case 'tulip':
-            if (stage === 0) { // Bulb
+            if (stage === 0) { 
                 content = `<path d="M92,155 Q88,140 100,135 Q112,140 108,155 Z" fill="#D7CCC8" stroke="#8D6E63"/><path d="M95,155 L95,160 M100,155 L100,162 M105,155 L105,160" stroke="#FFF8E1" stroke-width="1"/>`;
-            } else if (stage === 1) { // Sheath
+            } else if (stage === 1) { 
                 content = `<path d="M100,155 L100,130" stroke="#81C784" stroke-width="8" stroke-linecap="round"/>`;
-            } else if (stage === 2) { // Leaves & Bud
+            } else if (stage === 2) { 
                 content = `<path d="M100,155 Q85,130 80,110" fill="none" stroke="#66BB6A" stroke-width="6"/>
                            <path d="M100,155 Q115,130 120,110" fill="none" stroke="#66BB6A" stroke-width="6"/>
                            <path d="M100,155 L100,100" stroke="#81C784" stroke-width="4"/>
                            <ellipse cx="100" cy="100" rx="6" ry="10" fill="${plantC}" opacity="0.7"/>`;
-            } else { // Mature
+            } else { 
                 content = `<path d="M100,155 L100,90" stroke="#4CAF50" stroke-width="5"/>
                            <path d="M100,155 Q70,110 60,80" fill="none" stroke="#66BB6A" stroke-width="6"/>
                            <path d="M100,155 Q130,110 140,80" fill="none" stroke="#66BB6A" stroke-width="6"/>
@@ -563,7 +640,7 @@ function getPlantSVG(stage, type, potStyle) {
             break;
     }
 
-    return `<svg viewBox="0 0 200 220" class="interactive-plant-svg">${pot}${content}</svg>`;
+    return `<svg viewBox="0 0 200 220" class="interactive-plant-svg">${potShape}${content}</svg>`;
 }
 
 // --- ADDED FUNCTION: OPEN HABIT DIALOG ---
