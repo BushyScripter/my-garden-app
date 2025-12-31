@@ -51,6 +51,11 @@ let tempHabitState = { type: 'grape' };
 
 /* --- INITIALIZATION & EVENTS --- */
 document.addEventListener('DOMContentLoaded', () => {
+    const nc = document.getElementById('notification-container');
+    if (nc && nc.showPopover) {
+        nc.popover = "manual"; // Set as manual popover
+        nc.showPopover();      // Push to Top Layer above all dialogs
+    }
     setupEventListeners();
     initAuth();
     checkPurchaseSuccess();
